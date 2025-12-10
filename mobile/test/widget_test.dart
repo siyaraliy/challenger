@@ -5,26 +5,49 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
-import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:get_it/get_it.dart';
+import 'package:mobile/core/di/service_locator.dart';
+import 'package:mobile/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:mobile/features/auth/domain/repositories/auth_repository.dart';
 import 'package:mobile/main.dart';
+import 'package:mocktail/mocktail.dart';
+
+// Mock dependencies
+class MockAuthRepository extends Mock implements AuthRepository {}
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const ChallengerApp());
+  setUpAll(() {
+    // Register dependencies for testing
+    final getIt = GetIt.instance;
+    getIt.registerLazySingleton<AuthRepository>(() => MockAuthRepository());
+    getIt.registerFactory(() => AuthBloc(authRepository: getIt()));
+  });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  testWidgets('App starts at Login Screen', (WidgetTester tester) async {
+    // Provide the Bloc directly since main.dart does it in runApp not inside ChallengerApp
+    // Wait, ChallengerApp is just MaterialApp.router.
+    // But main.dart wraps it in MultiBlocProvider.
+    // So we need to wrap it here too.
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    final authBloc = AuthBloc(authRepository: GetIt.I<AuthRepository>());
+    authBloc.add(AuthCheckRequested()); // Initialize state
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    await tester.pumpWidget(
+      MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: authBloc),
+        ],
+        child: const ChallengerApp(),
+      ),
+    );
+
+    // Initial navigation might take a frame
+    await tester.pumpAndSettle();
+
+    // Verify we are on Login Screen
+    expect(find.text('GİRİŞ YAP'), findsOneWidget);
+    expect(find.text('CHALLENGER'), findsOneWidget);
   });
 }
