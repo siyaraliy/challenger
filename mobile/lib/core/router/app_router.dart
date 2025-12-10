@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mobile/core/di/service_locator.dart';
+import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/discover/presentation/screens/discover_screen.dart';
 import '../../features/ranking/presentation/screens/ranking_screen.dart';
@@ -10,14 +14,36 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
+// ... (Other imports remain, ensure they are compatible)
+
 class AppRouter {
   static final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/home',
+    refreshListenable: _GoRouterRefreshStream(getIt<AuthBloc>().stream),
+    redirect: (context, state) {
+      final authState = getIt<AuthBloc>().state;
+      final isAuthenticated = authState is Authenticated;
+      final isLoggingIn = state.uri.path == '/login' || state.uri.path == '/register';
+
+      if (!isAuthenticated && !isLoggingIn) {
+        return '/login';
+      }
+
+      if (isAuthenticated && isLoggingIn) {
+        return '/home';
+      }
+
+      return null;
+    },
     routes: [
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/register',
+        builder: (context, state) => const RegisterScreen(),
       ),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
@@ -49,6 +75,24 @@ class AppRouter {
       ),
     ],
   );
+}
+
+// Convert Stream to Listenable for GoRouter
+class _GoRouterRefreshStream extends ChangeNotifier {
+  _GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _subscription = stream.asBroadcastStream().listen(
+      (dynamic _) => notifyListeners(),
+    );
+  }
+
+  late final dynamic _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
 }
 
 class ScaffoldWithNavBar extends StatelessWidget {
