@@ -28,6 +28,8 @@ class AuthRegisterRequested extends AuthEvent {
   List<Object> get props => [email, password, fullName];
 }
 
+class AuthLoginAsGuest extends AuthEvent {}
+
 class AuthLogoutRequested extends AuthEvent {}
 
 // States
@@ -65,6 +67,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLoginRequested>(_onLoginRequested);
     on<AuthRegisterRequested>(_onRegisterRequested);
     on<AuthLogoutRequested>(_onLogoutRequested);
+    on<AuthLoginAsGuest>(_onLoginAsGuest);
   }
 
   Future<void> _onAuthCheckRequested(
@@ -123,5 +126,20 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     await _authRepository.logout();
     emit(Unauthenticated());
+  }
+
+  Future<void> _onLoginAsGuest(
+    AuthLoginAsGuest event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      await _authRepository.loginAsGuest();
+      final userId = await _authRepository.getCurrentUserId();
+      emit(Authenticated(userId ?? 'guest'));
+    } catch (e) {
+      emit(AuthError(e.toString()));
+      emit(Unauthenticated());
+    }
   }
 }

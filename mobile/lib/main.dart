@@ -16,6 +16,7 @@ void main() async {
   
   // Initialize Hive
   await Hive.initFlutter();
+  await Hive.deleteBoxFromDisk('auth_box'); // Session clear
   
   // Initialize Dependency Injection
   await di.init();

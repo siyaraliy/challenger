@@ -185,6 +185,22 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ],
                     ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    TextButton(
+                      onPressed: () {
+                        context.read<AuthBloc>().add(AuthLoginAsGuest());
+                      },
+                      child: Text(
+                        'Misafir Olarak Devam Et',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 16,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
