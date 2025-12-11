@@ -6,6 +6,8 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { TeamsModule } from './teams/teams.module';
 import { RedisModule } from './redis/redis.module';
+import { SupabaseModule } from './supabase/supabase.module';
+import { StaticDataModule } from './static-data/static-data.module';
 import { User } from './users/user.entity';
 import { Team } from './teams/team.entity';
 
@@ -23,6 +25,8 @@ import { Team } from './teams/team.entity';
       synchronize: true, // Auto-create tables (Dev only)
     }),
     RedisModule,
+    SupabaseModule,
+    StaticDataModule,
     UsersModule,
     TeamsModule,
   ],

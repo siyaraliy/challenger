@@ -1,0 +1,83 @@
+{
+  "positions": [
+    {
+      "id": "goalkeeper",
+      "name": "Kaleci",
+      "abbreviation": "KL"
+    },
+    {
+      "id": "defender",
+      "name": "Defans",
+      "abbreviation": "DF"
+    },
+    {
+      "id": "midfielder",
+      "name": "Orta Saha",
+      "abbreviation": "OS"
+    },
+    {
+      "id": "forward",
+      "name": "Forvet",
+      "abbreviation": "FW"
+    }
+  ],
+  "matchTypes": [
+    {
+      "id": "5v5",
+      "name": "5'e 5",
+      "playerCount": 5
+    },
+    {
+      "id": "6v6",
+      "name": "6'ya 6",
+      "playerCount": 6
+    },
+    {
+      "id": "7v7",
+      "name": "7'ye 7",
+      "playerCount": 7
+    },
+    {
+      "id": "8v8",
+      "name": "8'e 8",
+      "playerCount": 8
+    },
+    {
+      "id": "11v11",
+      "name": "11'e 11",
+      "playerCount": 11
+    }
+  ],
+  "reportReasons": [
+    {
+      "id": "offensive_language",
+      "name": "Hakaret/Küfür",
+      "severity": "medium"
+    },
+    {
+      "id": "spam",
+      "name": "Spam",
+      "severity": "low"
+    },
+    {
+      "id": "inappropriate_content",
+      "name": "Uygunsuz İçerik",
+      "severity": "high"
+    },
+    {
+      "id": "cheating",
+      "name": "Hile/Aldatma",
+      "severity": "high"
+    },
+    {
+      "id": "fake_profile",
+      "name": "Sahte Profil",
+      "severity": "medium"
+    },
+    {
+      "id": "other",
+      "name": "Diğer",
+      "severity": "low"
+    }
+  ]
+}

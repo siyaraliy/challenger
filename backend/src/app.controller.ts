@@ -1,12 +1,14 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { AppService } from './app.service';
 import { RedisService } from './redis/redis.service';
+import { StaticDataService } from './static-data/static-data.service';
 
 @Controller()
 export class AppController {
   constructor(
     private readonly appService: AppService,
     private readonly redisService: RedisService,
+    private readonly staticDataService: StaticDataService,
   ) { }
 
   @Get()
@@ -47,6 +49,35 @@ export class AppController {
     return {
       success: deleted > 0,
       message: deleted > 0 ? `Key "${key}" deleted` : `Key "${key}" not found`,
+    };
+  }
+
+  // Static Data Test Endpoints
+  @Get('static/positions')
+  getPositions() {
+    return {
+      data: this.staticDataService.getAllPositions(),
+    };
+  }
+
+  @Get('static/match-types')
+  getMatchTypes() {
+    return {
+      data: this.staticDataService.getAllMatchTypes(),
+    };
+  }
+
+  @Get('static/report-reasons')
+  getReportReasons() {
+    return {
+      data: this.staticDataService.getAllReportReasons(),
+    };
+  }
+
+  @Get('static/all')
+  getAllStaticData() {
+    return {
+      data: this.staticDataService.getAllData(),
     };
   }
 }
