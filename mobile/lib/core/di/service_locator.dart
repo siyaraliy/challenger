@@ -1,6 +1,9 @@
 import 'package:get_it/get_it.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/config/supabase_config.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/data/repositories/mock_auth_repository.dart';
+import '../../features/auth/data/repositories/supabase_auth_repository.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 
 final getIt = GetIt.instance;
@@ -11,7 +14,14 @@ Future<void> init() async {
   // Data sources
   
   // Repositories
-  getIt.registerLazySingleton<AuthRepository>(() => MockAuthRepository());
+  // Use SupabaseAuthRepository if configured, otherwise fallback to Mock
+  if (SupabaseConfig.isConfigured) {
+    getIt.registerLazySingleton<AuthRepository>(
+      () => SupabaseAuthRepository(Supabase.instance.client),
+    );
+  } else {
+    getIt.registerLazySingleton<AuthRepository>(() => MockAuthRepository());
+  }
   
   // Blocs
   getIt.registerLazySingleton(() => AuthBloc(authRepository: getIt()));
