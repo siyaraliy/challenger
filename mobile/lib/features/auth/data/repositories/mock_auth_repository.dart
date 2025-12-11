@@ -63,4 +63,11 @@ class MockAuthRepository implements AuthRepository {
       final box = await _getBox();
       return box.get(_userIdKey);
   }
+
+  @override
+  Future<void> loginAsGuest() async {
+    final box = await _getBox();
+    await box.put(_tokenKey, 'guest_token_${DateTime.now().millisecondsSinceEpoch}');
+    await box.put(_userIdKey, 'guest_user');
+  }
 }

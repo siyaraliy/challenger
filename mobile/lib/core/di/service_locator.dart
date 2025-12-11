@@ -14,5 +14,5 @@ Future<void> init() async {
   getIt.registerLazySingleton<AuthRepository>(() => MockAuthRepository());
   
   // Blocs
-  getIt.registerFactory(() => AuthBloc(authRepository: getIt()));
+  getIt.registerLazySingleton(() => AuthBloc(authRepository: getIt()));
 }

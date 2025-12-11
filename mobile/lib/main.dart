@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'core/router/app_router.dart';
-import 'core/theme/app_theme.dart';
-import 'core/di/service_locator.dart' as di;
-import 'core/bloc/app_bloc_observer.dart';
-import 'features/auth/presentation/bloc/auth_bloc.dart';
+
+// DÜZELTİLEN KISIM:
+// Relative path (örn: 'core/...') yerine package path kullanıldı.
+// Proje adınız pubspec.yaml'da 'mobile' olduğu için 'package:mobile/...' yapısı şarttır.
+import 'package:mobile/core/router/app_router.dart';
+import 'package:mobile/core/theme/app_theme.dart';
+import 'package:mobile/core/di/service_locator.dart' as di;
+import 'package:mobile/core/bloc/app_bloc_observer.dart';
+import 'package:mobile/features/auth/presentation/bloc/auth_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Initialize Hive
   await Hive.initFlutter();
+  await Hive.deleteBoxFromDisk('auth_box'); // Session clear
   
   // Initialize Dependency Injection
   await di.init();
