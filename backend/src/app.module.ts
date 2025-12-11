@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { TeamsModule } from './teams/teams.module';
+import { RedisModule } from './redis/redis.module';
 import { User } from './users/user.entity';
 import { Team } from './teams/team.entity';
 
@@ -21,6 +22,7 @@ import { Team } from './teams/team.entity';
       entities: [User, Team],
       synchronize: true, // Auto-create tables (Dev only)
     }),
+    RedisModule,
     UsersModule,
     TeamsModule,
   ],
