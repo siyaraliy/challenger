@@ -22,7 +22,7 @@ class AppRouter {
     refreshListenable: _GoRouterRefreshStream(getIt<AuthBloc>().stream),
     redirect: (context, state) {
       final authState = getIt<AuthBloc>().state;
-      final isAuthenticated = authState is Authenticated;
+      final isAuthenticated = authState is AuthAuthenticated || authState is AuthGuest;
       final isLoggingIn = state.uri.path == '/login' || state.uri.path == '/register';
 
       if (!isAuthenticated && !isLoggingIn) {

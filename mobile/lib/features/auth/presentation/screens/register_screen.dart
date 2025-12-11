@@ -52,9 +52,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       extendBodyBehindAppBar: true,
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is Authenticated) {
+          if (state is AuthAuthenticated || state is AuthGuest) {
             context.go('/home');
-          } else if (state is AuthError) {
+          } else if (state is AuthFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message)),
             );

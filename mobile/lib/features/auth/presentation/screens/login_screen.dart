@@ -30,10 +30,10 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is Authenticated) {
+          if (state is AuthAuthenticated || state is AuthGuest) {
              // Router redirect will handle navigation, but sometimes proactive navigation helps
              // context.go('/home'); 
-          } else if (state is AuthError) {
+          } else if (state is AuthFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message)),
             );
@@ -190,7 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     
                     TextButton(
                       onPressed: () {
-                        context.read<AuthBloc>().add(AuthLoginAsGuest());
+                        context.read<AuthBloc>().add(AuthGuestLoginRequested());
                       },
                       child: Text(
                         'Misafir Olarak Devam Et',
