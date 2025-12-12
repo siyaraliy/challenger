@@ -11,6 +11,8 @@ import '../../features/ranking/presentation/screens/ranking_screen.dart';
 import '../../features/chat/presentation/screens/chat_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/team/presentation/screens/create_team_screen.dart';
+import '../../features/team/presentation/screens/team_detail_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -76,6 +78,17 @@ class AppRouter {
               create: (context) => getIt<ProfileBloc>(),
               child: const ProfileScreen(),
             ),
+          ),
+          GoRoute(
+            path: '/create-team',
+            builder: (context, state) => const CreateTeamScreen(),
+          ),
+          GoRoute(
+            path: '/team/:teamId',
+            builder: (context, state) {
+              final teamId = state.pathParameters['teamId']!;
+              return TeamDetailScreen(teamId: teamId);
+            },
           ),
         ],
       ),

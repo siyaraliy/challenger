@@ -1,10 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../../core/di/service_locator.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/models/user_profile.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../team/data/repositories/team_repository.dart';
 import '../bloc/profile_bloc.dart';
 import '../widgets/profile_edit_dialog.dart';
 
@@ -30,6 +33,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context.read<ProfileBloc>().add(ProfileLoadRequested(authState.user.id));
     } else if (authState is AuthGuest && authState.user != null) {
       context.read<ProfileBloc>().add(ProfileLoadRequested(authState.user!.id));
+    }
+  }
+
+  Future<void> _checkAndNavigateToTeam() async {
+    try {
+      final authState = context.read<AuthBloc>().state;
+      String? userId;
+      
+      if (authState is AuthAuthenticated) {
+        userId = authState.user.id;
+      } else if (authState is AuthGuest && authState.user != null) {
+        userId = authState.user!.id;
+      }
+
+      if (userId != null) {
+        final teamRepo = getIt<TeamRepository>();
+        final team = await teamRepo.getMyTeam(userId);
+        
+        if (team != null && mounted) {
+          context.go('/team/${team.id}');
+        } else if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Henüz takımınız yok')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Takım yüklenemedi: $e')),
+        );
+      }
     }
   }
 
@@ -76,6 +111,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: const Text('Profil'),
         centerTitle: true,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.shield_outlined),
+            tooltip: 'Takım Profiline Geç',
+            onPressed: _checkAndNavigateToTeam,
+          ),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.red),
             onPressed: () {

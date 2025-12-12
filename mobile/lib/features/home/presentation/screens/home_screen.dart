@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mobile/core/widgets/post_card.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -49,6 +50,13 @@ class HomeScreen extends StatelessWidget {
             comments: index * 3,
           );
         },
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.go('/create-team'),
+        icon: const Icon(Icons.shield),
+        label: const Text('Takım Oluştur'),
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: Colors.black,
       ),
     );
   }
