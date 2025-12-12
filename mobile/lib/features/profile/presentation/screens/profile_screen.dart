@@ -1,199 +1,261 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../../../core/constants/app_constants.dart';
+import '../../../../core/models/user_profile.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../bloc/profile_bloc.dart';
+import '../widgets/profile_edit_dialog.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
 
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        body: NestedScrollView(
-          headerSliverBuilder: (context, innerBoxIsScrolled) {
-            return [
-              SliverAppBar(
-                expandedHeight: 350, // Increased height
-                pinned: true,
-                title: Text(
-                  'CHALLENGER',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.5,
-                    fontStyle: FontStyle.italic,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-                centerTitle: true,
-                flexibleSpace: FlexibleSpaceBar(
-                  background: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      // Cover Image
-                      Container(color: Colors.grey[900]), // Placeholder for Cover
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              theme.scaffoldBackgroundColor,
-                            ],
-                            stops: const [0.5, 1.0],
-                          ),
-                        ),
-                      ),
-                      // Profile Info
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 60), // Added padding to push content up from tabs
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: theme.colorScheme.primary, width: 3),
-                              ),
-                              child: const CircleAvatar(
-                                radius: 50,
-                                backgroundColor: Colors.grey,
-                                child: Icon(Icons.shield, size: 50, color: Colors.white),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Red Dragons FC',
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                            Text(
-                              'İstanbul, Kadıköy • Lig A',
-                              style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
-                            ),
-                            const SizedBox(height: 20),
-                            // Stats Row
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                _StatItem(label: 'Maç', value: '24'),
-                                _StatItem(label: 'Galibiyet', value: '18'),
-                                _StatItem(label: 'Gol', value: '56'),
-                                _StatItem(label: 'Puan', value: '2400'),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                bottom: TabBar(
-                  indicatorColor: theme.colorScheme.primary,
-                  labelColor: theme.colorScheme.primary,
-                  unselectedLabelColor: Colors.grey,
-                  tabs: const [
-                    Tab(text: 'Kadro'),
-                    Tab(text: 'Fikstür'),
-                    Tab(text: 'Medya'),
-                  ],
-                ),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.settings),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.logout, color: Colors.red),
-                    onPressed: () {
-                      context.read<AuthBloc>().add(AuthLogoutRequested());
-                    },
-                  ),
-                ],
-              ),
-            ];
-          },
-          body: TabBarView(
-            children: [
-              // Squad Tab
-              ListView.separated(
-                padding: const EdgeInsets.all(16),
-                itemCount: 11,
-                separatorBuilder: (_, __) => const Divider(color: Colors.white10),
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.grey[800],
-                      child: const Icon(Icons.person, color: Colors.white),
-                    ),
-                    title: Text(
-                      'Oyuncu ${index + 1}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                    subtitle: Text(
-                      index == 0 ? 'Kaptan' : 'Forvet',
-                      style: TextStyle(color: index == 0 ? theme.colorScheme.primary : Colors.grey),
-                    ),
-                    trailing: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white10,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '#${10 + index}',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  );
-                },
-              ),
-              // Fixtures Tab Placeholder
-              const Center(child: Text('Fikstür Yakında')),
-              // Media Tab Placeholder
-              const Center(child: Text('Medya Yakında')),
-            ],
-          ),
-        ),
+class _ProfileScreenState extends State<ProfileScreen> {
+  final ImagePicker _imagePicker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  void _loadProfile() {
+    final authState = context.read<AuthBloc>().state;
+    if (authState is AuthAuthenticated) {
+      context.read<ProfileBloc>().add(ProfileLoadRequested(authState.user.id));
+    } else if (authState is AuthGuest && authState.user != null) {
+      context.read<ProfileBloc>().add(ProfileLoadRequested(authState.user!.id));
+    }
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
+
+      if (image != null) {
+        context.read<ProfileBloc>().add(
+              ProfileAvatarUploadRequested(File(image.path)),
+            );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Resim seçilemedi: $e')),
+        );
+      }
+    }
+  }
+
+  void _showEditDialog(UserProfile profile) {
+    final profileBloc = context.read<ProfileBloc>();
+    showDialog(
+      context: context,
+      builder: (dialogContext) => ProfileEditDialog(
+        profile: profile,
+        onSave: (updatedProfile) {
+          profileBloc.add(ProfileUpdateRequested(updatedProfile));
+        },
       ),
     );
   }
-}
-
-class _StatItem extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _StatItem({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Expanded(
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Profil'),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.red),
+            onPressed: () {
+              context.read<AuthBloc>().add(AuthLogoutRequested());
+            },
+          ),
+        ],
+      ),
+      body: BlocConsumer<ProfileBloc, ProfileState>(
+        listener: (context, state) {
+          if (state is ProfileError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
+          } else if (state is ProfileUpdated) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Profil güncellendi')),
+            );
+          }
+        },
+        builder: (context, state) {
+          if (state is ProfileLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          // Show loading overlay during avatar upload
+          if (state is ProfileAvatarUploading) {
+            return Container(
+              color: Colors.black54,
+              child: const Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(color: Colors.white),
+                    SizedBox(height: 16),
+                    Text(
+                      'Avatar yükleniyor...',
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          if (state is ProfileLoaded) {
+            return _buildProfileContent(theme, state.profile);
+          }
+
+          return const Center(child: Text('Profil yüklenemedi'));
+        },
+      ),
+    );
+  }
+
+  Widget _buildProfileContent(ThemeData theme, UserProfile profile) {
+    return SingleChildScrollView(
       child: Column(
         children: [
+          const SizedBox(height: 32),
+          
+          // Avatar - Clickable
+          InkWell(
+            onTap: _pickImage,
+            borderRadius: BorderRadius.circular(100),
+            child: Stack(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: theme.colorScheme.primary,
+                      width: 3,
+                    ),
+                  ),
+                  child: CircleAvatar(
+                    radius: 75,
+                    backgroundColor: Colors.grey[700],
+                    backgroundImage: profile.avatarUrl != null
+                        ? NetworkImage(profile.avatarUrl!)
+                        : null,
+                    child: profile.avatarUrl == null
+                        ? const Icon(Icons.person, size: 60, color: Colors.white)
+                        : null,
+                  ),
+                ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: theme.scaffoldBackgroundColor,
+                        width: 2,
+                      ),
+                    ),
+                    child: const Icon(Icons.camera_alt, size: 20, color: Colors.black),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Name
           Text(
-            value,
-            style: theme.textTheme.titleLarge?.copyWith(
+            profile.fullName ?? 'İsim Girilmemiş',
+            style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
               color: Colors.white,
-              fontSize: 22,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: Colors.grey,
-              fontSize: 12,
+
+          const SizedBox(height: 8),
+
+          // Position
+          if (profile.position != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: theme.colorScheme.primary,
+                  width: 1.5,
+                ),
+              ),
+              child: Text(
+                AppConstants.getPositionName(profile.position!) ?? profile.position!,
+                style: TextStyle(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+
+          const SizedBox(height: 24),
+
+          // Bio
+          if (profile.bio != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                profile.bio!,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+
+          const SizedBox(height: 32),
+
+          // Edit Button
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton.icon(
+                onPressed: () => _showEditDialog(profile),
+                icon: const Icon(Icons.edit),
+                label: const Text('Düzenle'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
             ),
           ),
+
+          const SizedBox(height: 32),
         ],
       ),
     );

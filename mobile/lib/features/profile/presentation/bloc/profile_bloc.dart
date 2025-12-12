@@ -27,10 +27,9 @@ class ProfileUpdateRequested extends ProfileEvent {
 
 class ProfileAvatarUploadRequested extends ProfileEvent {
   final File image;
-  final String userId;
-  const ProfileAvatarUploadRequested(this.image, this.userId);
+  const ProfileAvatarUploadRequested(this.image);
   @override
-  List<Object?> get props => [image, userId];
+  List<Object?> get props => [image];
 }
 
 // States
@@ -114,19 +113,25 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     ProfileAvatarUploadRequested event,
     Emitter<ProfileState> emit,
   ) async {
+    // Store current profile before changing state
+    final currentState = state;
+    if (currentState is! ProfileLoaded) {
+      emit(const ProfileError('Profil yüklenmemiş'));
+      return;
+    }
+    
+    final currentProfile = currentState.profile;
     emit(ProfileAvatarUploading());
+    
     try {
       final avatarUrl = await _profileRepository.uploadAvatar(event.image);
-      
-      // Get current profile and update avatar
-      final currentProfile = await _profileRepository.getProfile(event.userId);
-      if (currentProfile != null) {
-        final updatedProfile = currentProfile.copyWith(avatarUrl: avatarUrl);
-        await _profileRepository.updateProfile(updatedProfile);
-        emit(ProfileLoaded(updatedProfile));
-      }
+      final updatedProfile = currentProfile.copyWith(avatarUrl: avatarUrl);
+      await _profileRepository.updateProfile(updatedProfile);
+      emit(ProfileLoaded(updatedProfile));
     } catch (e) {
       emit(ProfileError(e.toString()));
+      // Return to previous loaded state on error
+      emit(ProfileLoaded(currentProfile));
     }
   }
 }

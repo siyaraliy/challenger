@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mobile/core/di/service_locator.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../features/profile/presentation/bloc/profile_bloc.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/discover/presentation/screens/discover_screen.dart';
@@ -70,7 +72,10 @@ class AppRouter {
           ),
           GoRoute(
             path: '/profile',
-            builder: (context, state) => const ProfileScreen(),
+            builder: (context, state) => BlocProvider(
+              create: (context) => getIt<ProfileBloc>(),
+              child: const ProfileScreen(),
+            ),
           ),
         ],
       ),
