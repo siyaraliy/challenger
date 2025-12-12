@@ -8,8 +8,15 @@ class TeamRepository {
   TeamRepository(this._supabase);
 
   /// Create a new team
-  Future<Team> createTeam(String name, String captainId, {File? logo}) async {
+  /// Automatically adds current user as captain to team_members table
+  Future<Team> createTeam(String name, {File? logo}) async {
     try {
+      // Get current user ID (captain)
+      final captainId = _supabase.auth.currentUser?.id;
+      if (captainId == null) {
+        throw Exception('Kullanıcı oturumu bulunamadı');
+      }
+
       String? logoUrl;
 
       // Upload logo if provided
@@ -32,7 +39,7 @@ class TeamRepository {
 
       final team = Team.fromJson(response);
 
-      // Add captain to team_members
+      // Add captain to team_members (automatic)
       await _supabase.from('team_members').insert({
         'team_id': team.id,
         'user_id': captainId,

@@ -18,10 +18,12 @@ final _shellNavigatorKey = GlobalKey<NavigatorState>();
 class AppRouter {
   static final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/home',
+    initialLocation: '/login',
     refreshListenable: _GoRouterRefreshStream(getIt<AuthBloc>().stream),
     redirect: (context, state) {
       final authState = getIt<AuthBloc>().state;
+      
+      // Both authenticated and guest users can access app
       final isAuthenticated = authState is AuthAuthenticated || authState is AuthGuest;
       final isLoggingIn = state.uri.path == '/login' || state.uri.path == '/register';
 

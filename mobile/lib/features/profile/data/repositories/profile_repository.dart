@@ -36,8 +36,15 @@ class ProfileRepository {
   }
 
   /// Upload avatar to Supabase Storage and return public URL
-  Future<String> uploadAvatar(File file, String userId) async {
+  /// Note: userId should be obtained from current authenticated user
+  Future<String> uploadAvatar(File file) async {
     try {
+      // Get current user ID from Supabase auth
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) {
+        throw Exception('Kullanıcı oturumu bulunamadı');
+      }
+
       final fileExt = file.path.split('.').last;
       final fileName = '$userId/${DateTime.now().millisecondsSinceEpoch}.$fileExt';
 

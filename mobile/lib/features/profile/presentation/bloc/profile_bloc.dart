@@ -116,7 +116,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   ) async {
     emit(ProfileAvatarUploading());
     try {
-      final avatarUrl = await _profileRepository.uploadAvatar(event.image, event.userId);
+      final avatarUrl = await _profileRepository.uploadAvatar(event.image);
       
       // Get current profile and update avatar
       final currentProfile = await _profileRepository.getProfile(event.userId);
