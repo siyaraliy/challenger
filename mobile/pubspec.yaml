@@ -44,6 +44,7 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   supabase_flutter: ^2.8.2
+  image_picker: ^1.0.7
 
 dev_dependencies:
   flutter_test:
