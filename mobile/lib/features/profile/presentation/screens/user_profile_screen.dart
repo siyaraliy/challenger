@@ -206,7 +206,7 @@ class UserProfileView extends StatelessWidget {
 
     if (image != null && context.mounted) {
       context.read<ProfileBloc>().add(
-            ProfileAvatarUploadRequested(File(image.path), userId),
+            ProfileAvatarUploadRequested(File(image.path)),
           );
     }
   }
