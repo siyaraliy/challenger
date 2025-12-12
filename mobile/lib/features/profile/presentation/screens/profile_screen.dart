@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/models/user_profile.dart';
+import '../../../../core/widgets/mode_switcher_button.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../team/data/repositories/team_repository.dart';
 import '../bloc/profile_bloc.dart';
@@ -111,11 +112,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: const Text('Profil'),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.shield_outlined),
-            tooltip: 'Takım Profiline Geç',
-            onPressed: _checkAndNavigateToTeam,
-          ),
+          const ModeSwitcherButton(),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.red),
             onPressed: () {

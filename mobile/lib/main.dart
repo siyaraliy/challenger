@@ -12,6 +12,8 @@ import 'package:mobile/core/cache/static_data_cache.dart';
 import 'package:mobile/core/models/static_data_model.dart';
 import 'package:mobile/features/auth/presentation/bloc/auth_bloc.dart';
 
+import 'package:mobile/core/cubit/mode_cubit.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -50,14 +52,31 @@ void main() async {
         BlocProvider(
           create: (context) => di.getIt<AuthBloc>(),
         ),
+        BlocProvider(
+          create: (context) => di.getIt<ModeCubit>(),
+        ),
       ],
       child: const ChallengerApp(),
     ),
   );
 }
 
-class ChallengerApp extends StatelessWidget {
+class ChallengerApp extends StatefulWidget {
   const ChallengerApp({super.key});
+
+  @override
+  State<ChallengerApp> createState() => _ChallengerAppState();
+}
+
+class _ChallengerAppState extends State<ChallengerApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Load saved mode after widget tree is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ModeCubit>().loadSavedMode();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

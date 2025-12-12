@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/supabase_config.dart';
+import '../../core/cubit/mode_cubit.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/data/repositories/mock_auth_repository.dart';
 import '../../features/auth/data/repositories/supabase_auth_repository.dart';
@@ -12,6 +13,9 @@ import '../../features/team/data/repositories/team_repository.dart';
 final getIt = GetIt.instance;
 
 Future<void> init() async {
+  // Core Services (always available)
+  getIt.registerLazySingleton(() => ModeCubit());
+  
   // External
   
   // Data sources
