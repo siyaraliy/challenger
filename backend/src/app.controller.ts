@@ -15,30 +15,34 @@ export class AppController {
   }
 
   @Get('positions')
-  getPositions() {
+  async getPositions() {
     return {
-      data: this.staticDataService.getAllPositions(),
+      source: 'SQLite',
+      data: await this.staticDataService.getAllPositions(),
     };
   }
 
   @Get('match-types')
-  getMatchTypes() {
+  async getMatchTypes() {
     return {
-      data: this.staticDataService.getAllMatchTypes(),
+      source: 'SQLite',
+      data: await this.staticDataService.getAllMatchTypes(),
     };
   }
 
   @Get('report-reasons')
-  getReportReasons() {
+  async getReportReasons() {
     return {
-      data: this.staticDataService.getAllReportReasons(),
+      source: 'SQLite',
+      data: await this.staticDataService.getAllReportReasons(),
     };
   }
 
   @Get('static-data/all')
-  getAllStaticData() {
+  async getAllStaticData() {
     return {
-      data: this.staticDataService.getAllData(),
+      source: 'SQLite',
+      data: await this.staticDataService.getAllData(),
     };
   }
 }
