@@ -1,29 +1,31 @@
 import 'package:flutter/material.dart';
+import '../../../../core/widgets/mode_switcher_button.dart';
 
-/// Placeholder Chat Screen
-/// TODO: Implement real chat with Supabase later
-class ChatScreen extends StatelessWidget {
-  const ChatScreen({super.key});
+class TeamSettingsScreen extends StatelessWidget {
+  const TeamSettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sohbet'),
+        title: const Text('Takım Ayarları'),
         centerTitle: true,
+        actions: const [
+          ModeSwitcherButton(),
+        ],
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.chat_bubble_outline,
+              Icons.settings,
               size: 80,
               color: Colors.grey[600],
             ),
             const SizedBox(height: 24),
             Text(
-              'Sohbet Özelliği',
+              'Takım Ayarları',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -31,7 +33,7 @@ class ChatScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Yakında eklenecek...',
+              'Takım bilgilerini düzenle, üyeleri yönet...',
               style: TextStyle(
                 color: Colors.grey[500],
                 fontSize: 16,

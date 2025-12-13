@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mobile/core/di/service_locator.dart';
+import '../cubit/mode_cubit.dart';
+import '../models/app_mode_state.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/profile/presentation/bloc/profile_bloc.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
@@ -13,6 +15,11 @@ import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/team/presentation/screens/create_team_screen.dart';
 import '../../features/team/presentation/screens/team_detail_screen.dart';
+import '../../features/team/presentation/screens/team_home_screen.dart';
+import '../../features/team/presentation/screens/team_matches_screen.dart';
+import '../../features/team/presentation/screens/team_squad_screen.dart';
+import '../../features/team/presentation/screens/team_chat_screen.dart';
+import '../../features/team/presentation/screens/team_settings_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -26,16 +33,19 @@ class AppRouter {
     refreshListenable: _GoRouterRefreshStream(getIt<AuthBloc>().stream),
     redirect: (context, state) {
       final authState = getIt<AuthBloc>().state;
+      final path = state.uri.path;
       
       // Both authenticated and guest users can access app
       final isAuthenticated = authState is AuthAuthenticated || authState is AuthGuest;
-      final isLoggingIn = state.uri.path == '/login' || state.uri.path == '/register';
+      final isLoggingIn = path == '/login' || path == '/register';
+      final isTeamRoute = path.startsWith('/team-') || path.startsWith('/team/');
 
       if (!isAuthenticated && !isLoggingIn) {
         return '/login';
       }
 
-      if (isAuthenticated && isLoggingIn) {
+      // Don't redirect if already on a team route
+      if (isAuthenticated && isLoggingIn && !isTeamRoute) {
         return '/home';
       }
 
@@ -90,6 +100,27 @@ class AppRouter {
               return TeamDetailScreen(teamId: teamId);
             },
           ),
+          // TEAM MODE ROUTES
+          GoRoute(
+            path: '/team-home',
+            builder: (context, state) => const TeamHomeScreen(),
+          ),
+          GoRoute(
+            path: '/team-matches',
+            builder: (context, state) => const TeamMatchesScreen(),
+          ),
+          GoRoute(
+            path: '/team-squad',
+            builder: (context, state) => const TeamSquadScreen(),
+          ),
+          GoRoute(
+            path: '/team-chat',
+            builder: (context, state) => const TeamChatScreen(),
+          ),
+          GoRoute(
+            path: '/team-settings',
+            builder: (context, state) => const TeamSettingsScreen(),
+          ),
         ],
       ),
     ],
@@ -121,11 +152,21 @@ class ScaffoldWithNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: child,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _calculateSelectedIndex(context),
-        onTap: (int idx) => _onItemTapped(idx, context),
+    return BlocBuilder<ModeCubit, AppModeState>(
+      builder: (context, modeState) {
+        return Scaffold(
+          body: child,
+          bottomNavigationBar: _buildBottomNav(context, modeState),
+        );
+      },
+    );
+  }
+
+  Widget _buildBottomNav(BuildContext context, AppModeState modeState) {
+    if (modeState.isUserMode) {
+      return BottomNavigationBar(
+        currentIndex: _calculateSelectedIndexUser(context),
+        onTap: (int idx) => _onUserItemTapped(idx, context),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Anasayfa'),
           BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Keşfet'),
@@ -133,11 +174,24 @@ class ScaffoldWithNavBar extends StatelessWidget {
           BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Mesajlar'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
         ],
-      ),
-    );
+      );
+    } else {
+      // Team mode nav
+      return BottomNavigationBar(
+        currentIndex: _calculateSelectedIndexTeam(context),
+        onTap: (int idx) => _onTeamItemTapped(idx, context),
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.shield), label: 'Takım'),
+          BottomNavigationBarItem(icon: Icon(Icons.sports_soccer), label: 'Maçlar'),
+          BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Kadro'),
+          BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Sohbet'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Ayarlar'),
+        ],
+      );
+    }
   }
 
-  static int _calculateSelectedIndex(BuildContext context) {
+  static int _calculateSelectedIndexUser(BuildContext context) {
     final String location = GoRouterState.of(context).uri.path;
     if (location.startsWith('/home')) return 0;
     if (location.startsWith('/discover')) return 1;
@@ -147,7 +201,17 @@ class ScaffoldWithNavBar extends StatelessWidget {
     return 0;
   }
 
-  void _onItemTapped(int index, BuildContext context) {
+  static int _calculateSelectedIndexTeam(BuildContext context) {
+    final String location = GoRouterState.of(context).uri.path;
+    if (location.startsWith('/team-home')) return 0;
+    if (location.startsWith('/team-matches')) return 1;
+    if (location.startsWith('/team-squad')) return 2;
+    if (location.startsWith('/team-chat')) return 3;
+    if (location.startsWith('/team-settings')) return 4;
+    return 0;
+  }
+
+  void _onUserItemTapped(int index, BuildContext context) {
     switch (index) {
       case 0:
         GoRouter.of(context).go('/home');
@@ -163,6 +227,26 @@ class ScaffoldWithNavBar extends StatelessWidget {
         break;
       case 4:
         GoRouter.of(context).go('/profile');
+        break;
+    }
+  }
+
+  void _onTeamItemTapped(int index, BuildContext context) {
+    switch (index) {
+      case 0:
+        GoRouter.of(context).go('/team-home');
+        break;
+      case 1:
+        GoRouter.of(context).go('/team-matches');
+        break;
+      case 2:
+        GoRouter.of(context).go('/team-squad');
+        break;
+      case 3:
+        GoRouter.of(context).go('/team-chat');
+        break;
+      case 4:
+        GoRouter.of(context).go('/team-settings');
         break;
     }
   }

@@ -25,6 +25,17 @@ class Team extends Equatable {
     );
   }
 
+  /// Factory for parsing team login response (minimal fields)
+  factory Team.fromLoginResponse(Map<String, dynamic> json) {
+    return Team(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      captainId: '', // Not provided in login response
+      logoUrl: (json['logoUrl'] ?? json['logo_url']) as String?,
+      createdAt: DateTime.now(), // Not provided in login response
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../team/data/repositories/team_repository.dart';
+import '../../../auth/data/repositories/supabase_auth_repository.dart';
 import 'team_detail_screen.dart';
 
 class CreateTeamScreen extends StatefulWidget {
@@ -15,6 +16,9 @@ class CreateTeamScreen extends StatefulWidget {
 
 class _CreateTeamScreenState extends State<CreateTeamScreen> {
   final _teamNameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
   final ImagePicker _imagePicker = ImagePicker();
   File? _selectedLogo;
   bool _isCreating = false;
@@ -22,6 +26,8 @@ class _CreateTeamScreenState extends State<CreateTeamScreen> {
   @override
   void dispose() {
     _teamNameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -47,23 +53,38 @@ class _CreateTeamScreenState extends State<CreateTeamScreen> {
   }
 
   Future<void> _createTeam() async {
-    if (_teamNameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Takım ismi boş olamaz')),
-      );
+    if (!_formKey.currentState!.validate()) {
       return;
     }
 
     setState(() => _isCreating = true);
 
     try {
+      // 1. Create team
       final teamRepo = getIt<TeamRepository>();
       final team = await teamRepo.createTeam(
         _teamNameController.text.trim(),
         logo: _selectedLogo,
       );
 
+      // Small delay to ensure team is fully created in database
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // 2. Register team credentials
+      final authRepo = getIt<SupabaseAuthRepository>();
+      await authRepo.registerTeamCredentials(
+        teamId: team.id,
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
       if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Takım başarıyla oluşturuldu!'),
+            backgroundColor: Colors.green,
+          ),
+        );
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (context) => TeamDetailScreen(teamId: team.id),
@@ -74,7 +95,7 @@ class _CreateTeamScreenState extends State<CreateTeamScreen> {
       if (mounted) {
         setState(() => _isCreating = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Takım oluşturulamadı: $e')),
+          SnackBar(content: Text('Hata: $e')),
         );
       }
     }
@@ -142,32 +163,124 @@ class _CreateTeamScreenState extends State<CreateTeamScreen> {
 
             const SizedBox(height: 40),
 
-            // Team Name TextField
-            TextField(
-              controller: _teamNameController,
-              style: const TextStyle(color: Colors.white, fontSize: 18),
-              decoration: InputDecoration(
-                labelText: 'Takım İsmi',
-                labelStyle: const TextStyle(color: Colors.grey),
-                hintText: 'Örn: Şampiyonlar FC',
-                hintStyle: TextStyle(color: Colors.grey[600]),
-                filled: true,
-                fillColor: Colors.white.withOpacity(0.1),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.withOpacity(0.3)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
-                ),
-                prefixIcon: const Icon(Icons.shield, color: Colors.grey),
+            // Form
+            Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  // Team Name TextField
+                  TextFormField(
+                    controller: _teamNameController,
+                    style: const TextStyle(color: Colors.white, fontSize: 18),
+                    decoration: InputDecoration(
+                      labelText: 'Takım İsmi',
+                      labelStyle: const TextStyle(color: Colors.grey),
+                      hintText: 'Örn: Şampiyonlar FC',
+                      hintStyle: TextStyle(color: Colors.grey[600]),
+                      filled: true,
+                      fillColor: Colors.white.withValues(alpha: 0.1),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+                      ),
+                      prefixIcon: const Icon(Icons.shield, color: Colors.grey),
+                    ),
+                    textCapitalization: TextCapitalization.words,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Takım ismi gerekli';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Email TextField
+                  TextFormField(
+                    controller: _emailController,
+                    style: const TextStyle(color: Colors.white, fontSize: 18),
+                    decoration: InputDecoration(
+                      labelText: 'Takım Email',
+                      labelStyle: const TextStyle(color: Colors.grey),
+                      hintText: 'Örn: team@example.com',
+                      hintStyle: TextStyle(color: Colors.grey[600]),
+                      filled: true,
+                      fillColor: Colors.white.withValues(alpha: 0.1),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+                      ),
+                      prefixIcon: const Icon(Icons.email, color: Colors.grey),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Email gerekli';
+                      }
+                      if (!value.contains('@')) {
+                        return 'Geçerli bir email girin';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Password TextField
+                  TextFormField(
+                    controller: _passwordController,
+                    style: const TextStyle(color: Colors.white, fontSize: 18),
+                    decoration: InputDecoration(
+                      labelText: 'Takım Şifresi',
+                      labelStyle: const TextStyle(color: Colors.grey),
+                      hintText: 'En az 6 karakter',
+                      hintStyle: TextStyle(color: Colors.grey[600]),
+                      filled: true,
+                      fillColor: Colors.white.withValues(alpha: 0.1),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: theme.colorScheme.primary, width: 2),
+                      ),
+                      prefixIcon: const Icon(Icons.lock, color: Colors.grey),
+                    ),
+                    obscureText: true,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Şifre gerekli';
+                      }
+                      if (value.length < 6) {
+                        return 'Şifre en az 6 karakter olmalı';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
               ),
-              textCapitalization: TextCapitalization.words,
             ),
 
             const SizedBox(height: 32),
@@ -176,10 +289,10 @@ class _CreateTeamScreenState extends State<CreateTeamScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.1),
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: theme.colorScheme.primary.withOpacity(0.3),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
                 ),
               ),
               child: Row(

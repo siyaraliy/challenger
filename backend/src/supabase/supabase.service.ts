@@ -5,11 +5,22 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 @Injectable()
 export class SupabaseService implements OnModuleInit {
     private readonly logger = new Logger(SupabaseService.name);
-    private client: SupabaseClient;
+    private _client: SupabaseClient;
 
     constructor(private configService: ConfigService) {
         const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
-        const supabaseKey = this.configService.get<string>('SUPABASE_KEY');
+        // Use service role key to bypass RLS for backend operations
+        const serviceRoleKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY');
+        const anonKey = this.configService.get<string>('SUPABASE_KEY');
+
+        const supabaseKey = serviceRoleKey || anonKey;
+
+        // Log which key is being used
+        if (serviceRoleKey) {
+            this.logger.log('Using SUPABASE_SERVICE_ROLE_KEY (RLS bypassed)');
+        } else if (anonKey) {
+            this.logger.warn('Using SUPABASE_KEY (anon key) - RLS will be enforced!');
+        }
 
         if (!supabaseUrl || !supabaseKey) {
             this.logger.warn(
@@ -18,22 +29,27 @@ export class SupabaseService implements OnModuleInit {
             return;
         }
 
-        this.client = createClient(supabaseUrl, supabaseKey);
+        this._client = createClient(supabaseUrl, supabaseKey);
     }
 
     onModuleInit() {
-        if (this.client) {
+        if (this._client) {
             this.logger.log('Supabase client initialized successfully');
         } else {
             this.logger.warn('Supabase client not initialized');
         }
     }
 
+    // Public client getter for services to access supabase
+    get client(): SupabaseClient {
+        return this.getClient();
+    }
+
     getClient(): SupabaseClient {
-        if (!this.client) {
+        if (!this._client) {
             throw new Error('Supabase client is not initialized');
         }
-        return this.client;
+        return this._client;
     }
 
     // Helper method for users table

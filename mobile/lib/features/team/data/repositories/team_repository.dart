@@ -39,10 +39,11 @@ class TeamRepository {
 
       final team = Team.fromJson(response);
 
-      // Add captain to team_members (automatic)
+      // Add captain to team_members (automatic) with login permission
       await _supabase.from('team_members').insert({
         'team_id': team.id,
         'user_id': captainId,
+        'can_login': true,
       });
 
       return team;

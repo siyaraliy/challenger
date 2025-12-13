@@ -1,5 +1,70 @@
 import 'package:flutter/material.dart';
 
+/// Team ranking data model (mock)
+class TeamRankingData {
+  final String id;
+  final String name;
+  final String? logoUrl;
+  final int points;
+  final int matchesPlayed;
+  final int wins;
+  final int losses;
+
+  const TeamRankingData({
+    required this.id,
+    required this.name,
+    this.logoUrl,
+    required this.points,
+    required this.matchesPlayed,
+    required this.wins,
+    required this.losses,
+  });
+}
+
+/// Mock team rankings
+const List<TeamRankingData> mockTeamRankings = [
+  TeamRankingData(
+    id: '1',
+    name: 'Red Dragons FC',
+    points: 450,
+    matchesPlayed: 15,
+    wins: 12,
+    losses: 3,
+  ),
+  TeamRankingData(
+    id: '2',
+    name: 'Blue Sharks',
+    points: 380,
+    matchesPlayed: 14,
+    wins: 10,
+    losses: 4,
+  ),
+  TeamRankingData(
+    id: '3',
+    name: 'Golden Eagles',
+    points: 350,
+    matchesPlayed: 13,
+    wins: 9,
+    losses: 4,
+  ),
+  TeamRankingData(
+    id: '4',
+    name: 'Black Panthers',
+    points: 320,
+    matchesPlayed: 12,
+    wins: 8,
+    losses: 4,
+  ),
+  TeamRankingData(
+    id: '5',
+    name: 'Silver Wolves',
+    points: 290,
+    matchesPlayed: 11,
+    wins: 7,
+    losses: 4,
+  ),
+];
+
 class RankingScreen extends StatelessWidget {
   const RankingScreen({super.key});
 
@@ -9,206 +74,130 @@ class RankingScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'CHALLENGER',
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w900,
-            letterSpacing: 1.5,
-            fontStyle: FontStyle.italic,
-            color: theme.colorScheme.primary,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () {},
-          ),
-        ],
+        title: const Text('Sıralama'),
+        centerTitle: true,
       ),
-      body: Column(
+      body: ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: mockTeamRankings.length,
+        separatorBuilder: (context, index) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          final team = mockTeamRankings[index];
+          final rank = index + 1;
+
+          return _buildTeamRankCard(context, theme, team, rank);
+        },
+      ),
+    );
+  }
+
+  Widget _buildTeamRankCard(
+    BuildContext context,
+    ThemeData theme,
+    TeamRankingData team,
+    int rank,
+  ) {
+    Color rankColor;
+    if (rank == 1) {
+      rankColor = Colors.amber;
+    } else if (rank == 2) {
+      rankColor = Colors.grey[400]!;
+    } else if (rank == 3) {
+      rankColor = Colors.brown[300]!;
+    } else {
+      rankColor = Colors.grey[700]!;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: rank <= 3 ? rankColor.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.1),
+          width: rank <= 3 ? 2 : 1,
+        ),
+      ),
+      child: Row(
         children: [
-          // Podium Section (Top 3)
+          // Rank badge
           Container(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  theme.colorScheme.surface,
-                  theme.scaffoldBackgroundColor,
-                ],
+              color: rankColor,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                '$rank',
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              crossAxisAlignment: CrossAxisAlignment.end,
+          ),
+
+          const SizedBox(width: 16),
+
+          // Team logo placeholder
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.grey[800],
+            ),
+            child: const Icon(Icons.shield, color: Colors.white, size: 28),
+          ),
+
+          const SizedBox(width: 16),
+
+          // Team info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _PodiumItem(
-                  rank: 2,
-                  teamName: 'Blue Sharks',
-                  points: '2150',
-                  height: 120,
-                  color: theme.colorScheme.secondary,
+                Text(
+                  team.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
-                _PodiumItem(
-                  rank: 1,
-                  teamName: 'Red Dragons',
-                  points: '2400',
-                  height: 160,
-                  color: theme.colorScheme.primary,
-                  isWinner: true,
-                ),
-                _PodiumItem(
-                  rank: 3,
-                  teamName: 'Iron Cleats',
-                  points: '1980',
-                  height: 100,
-                  color: Colors.orangeAccent,
+                const SizedBox(height: 4),
+                Text(
+                  '${team.matchesPlayed} Maç • ${team.wins}G ${team.losses}M',
+                  style: TextStyle(
+                    color: Colors.grey[400],
+                    fontSize: 13,
+                  ),
                 ),
               ],
             ),
           ),
 
-          // List Section (4th onwards)
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-              ),
-              child: ListView.separated(
-                padding: const EdgeInsets.all(20),
-                itemCount: 10,
-                separatorBuilder: (_, __) => const Divider(color: Colors.white10),
-                itemBuilder: (context, index) {
-                  final rank = index + 4;
-                  return ListTile(
-                    leading: Container(
-                      width: 40,
-                      height: 40,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white24),
-                      ),
-                      child: Text(
-                        '$rank',
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                    ),
-                    title: Text(
-                      'Team ${String.fromCharCode(70 + index)}', // F, G, H...
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                    subtitle: const Text('18 Maç • 12 Galibiyet', style: TextStyle(color: Colors.grey)),
-                    trailing: Text(
-                      '${1800 - (index * 50)} P',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                        fontSize: 16,
-                      ),
-                    ),
-                  );
-                },
+          // Points
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '${team.points} P',
+              style: const TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
               ),
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _PodiumItem extends StatelessWidget {
-  final int rank;
-  final String teamName;
-  final String points;
-  final double height;
-  final Color color;
-  final bool isWinner;
-
-  const _PodiumItem({
-    required this.rank,
-    required this.teamName,
-    required this.points,
-    required this.height,
-    required this.color,
-    this.isWinner = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Avatar
-        Stack(
-          alignment: Alignment.topCenter,
-          children: [
-            Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: color, width: 2),
-                boxShadow: [
-                  BoxShadow(color: color.withOpacity(0.5), blurRadius: 10),
-                ],
-              ),
-              child: CircleAvatar(
-                radius: isWinner ? 35 : 25,
-                backgroundColor: Colors.grey[800],
-                child: const Icon(Icons.shield, color: Colors.white),
-              ),
-            ),
-            if (isWinner)
-              Positioned(
-                top: -10,
-                child: Icon(Icons.emoji_events, color: Colors.amber, size: 30),
-              ),
-          ],
-        ),
-        
-        // Team Name
-        Text(
-          teamName,
-          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12),
-          overflow: TextOverflow.ellipsis,
-        ),
-        const SizedBox(height: 4),
-
-        // Bar
-        Container(
-          width: isWinner ? 80 : 60,
-          height: height,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.2),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-            border: Border.all(color: color.withOpacity(0.5)),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Text(
-                '$rank',
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        ),
-        
-        // Points
-        const SizedBox(height: 4),
-        Text(
-          '$points P',
-          style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 12),
-        ),
-      ],
     );
   }
 }

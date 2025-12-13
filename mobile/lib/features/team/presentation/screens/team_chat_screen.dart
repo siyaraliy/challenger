@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 
-/// Placeholder Chat Screen
-/// TODO: Implement real chat with Supabase later
-class ChatScreen extends StatelessWidget {
-  const ChatScreen({super.key});
+class TeamChatScreen extends StatelessWidget {
+  const TeamChatScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sohbet'),
+        title: const Text('Takım Sohbeti'),
         centerTitle: true,
       ),
       body: Center(
@@ -23,7 +21,7 @@ class ChatScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'Sohbet Özelliği',
+              'Takım Sohbeti',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -31,7 +29,7 @@ class ChatScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Yakında eklenecek...',
+              'Takım arkadaşlarınla sohbet et...',
               style: TextStyle(
                 color: Colors.grey[500],
                 fontSize: 16,

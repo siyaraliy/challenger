@@ -112,7 +112,7 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    theme.colorScheme.primary.withOpacity(0.2),
+                    theme.colorScheme.primary.withValues(alpha: 0.2),
                     Colors.transparent,
                   ],
                 ),
@@ -295,9 +295,9 @@ class _TeamDetailScreenState extends State<TeamDetailScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.2)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

@@ -25,9 +25,10 @@ Future<void> init() async {
   if (SupabaseConfig.isConfigured) {
     final supabaseClient = Supabase.instance.client;
     
-    getIt.registerLazySingleton<AuthRepository>(
-      () => SupabaseAuthRepository(supabaseClient),
-    );
+    // Register as both interface and concrete type
+    final authRepo = SupabaseAuthRepository(supabaseClient);
+    getIt.registerLazySingleton<AuthRepository>(() => authRepo);
+    getIt.registerLazySingleton<SupabaseAuthRepository>(() => authRepo);
     
     // Profile Repository
     getIt.registerLazySingleton<ProfileRepository>(
