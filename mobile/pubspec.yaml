@@ -45,6 +45,7 @@ dependencies:
   hive_flutter: ^1.1.0
   supabase_flutter: ^2.8.2
   image_picker: ^1.0.7
+  video_player: ^2.10.1
 
 dev_dependencies:
   flutter_test:

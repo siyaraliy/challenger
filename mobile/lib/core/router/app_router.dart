@@ -8,6 +8,7 @@ import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/profile/presentation/bloc/profile_bloc.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/home/presentation/screens/create_post_screen.dart';
 import '../../features/discover/presentation/screens/discover_screen.dart';
 import '../../features/ranking/presentation/screens/ranking_screen.dart';
 import '../../features/chat/presentation/screens/chat_screen.dart';
@@ -20,6 +21,7 @@ import '../../features/team/presentation/screens/team_matches_screen.dart';
 import '../../features/team/presentation/screens/team_squad_screen.dart';
 import '../../features/team/presentation/screens/team_chat_screen.dart';
 import '../../features/team/presentation/screens/team_settings_screen.dart';
+import '../../features/team/presentation/screens/team_profile_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -59,6 +61,11 @@ class AppRouter {
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
+      ),
+      // Create Post (outside shell for fullscreen)
+      GoRoute(
+        path: '/create-post',
+        builder: (context, state) => const CreatePostScreen(),
       ),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
@@ -120,6 +127,10 @@ class AppRouter {
           GoRoute(
             path: '/team-settings',
             builder: (context, state) => const TeamSettingsScreen(),
+          ),
+          GoRoute(
+            path: '/team-profile',
+            builder: (context, state) => const TeamProfileScreen(),
           ),
         ],
       ),
@@ -185,7 +196,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
           BottomNavigationBarItem(icon: Icon(Icons.sports_soccer), label: 'Maçlar'),
           BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Kadro'),
           BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Sohbet'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Ayarlar'),
+          BottomNavigationBarItem(icon: Icon(Icons.shield_outlined), label: 'Profil'),
         ],
       );
     }
@@ -207,7 +218,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
     if (location.startsWith('/team-matches')) return 1;
     if (location.startsWith('/team-squad')) return 2;
     if (location.startsWith('/team-chat')) return 3;
-    if (location.startsWith('/team-settings')) return 4;
+    if (location.startsWith('/team-profile')) return 4;
     return 0;
   }
 
@@ -246,7 +257,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
         GoRouter.of(context).go('/team-chat');
         break;
       case 4:
-        GoRouter.of(context).go('/team-settings');
+        GoRouter.of(context).go('/team-profile');
         break;
     }
   }

@@ -11,6 +11,7 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../team/data/repositories/team_repository.dart';
 import '../bloc/profile_bloc.dart';
 import '../widgets/profile_edit_dialog.dart';
+import '../widgets/profile_posts_tab.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -21,6 +22,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final ImagePicker _imagePicker = ImagePicker();
+  String? _userId;
 
   @override
   void initState() {
@@ -31,8 +33,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _loadProfile() {
     final authState = context.read<AuthBloc>().state;
     if (authState is AuthAuthenticated) {
+      _userId = authState.user.id;
       context.read<ProfileBloc>().add(ProfileLoadRequested(authState.user.id));
     } else if (authState is AuthGuest && authState.user != null) {
+      _userId = authState.user!.id;
       context.read<ProfileBloc>().add(ProfileLoadRequested(authState.user!.id));
     }
   }
@@ -48,22 +52,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
         userId = authState.user!.id;
       }
 
-      if (userId != null) {
-        final teamRepo = getIt<TeamRepository>();
-        final team = await teamRepo.getMyTeam(userId);
-        
-        if (team != null && mounted) {
-          context.go('/team/${team.id}');
-        } else if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Henüz takımınız yok')),
-          );
-        }
+      if (userId == null) return;
+
+      final teamRepo = getIt<TeamRepository>();
+      final team = await teamRepo.getMyTeam(userId);
+
+      if (team != null && mounted) {
+        context.push('/team/${team.id}');
+      } else if (mounted) {
+        context.push('/create-team');
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Takım yüklenemedi: $e')),
+          SnackBar(content: Text('Hata: $e')),
         );
       }
     }
@@ -73,10 +75,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
         imageQuality: 80,
       );
 
-      if (image != null) {
+      if (image != null && mounted) {
         context.read<ProfileBloc>().add(
               ProfileAvatarUploadRequested(File(image.path)),
             );
@@ -138,7 +142,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // Show loading overlay during avatar upload
           if (state is ProfileAvatarUploading) {
             return Container(
               color: Colors.black54,
@@ -148,10 +151,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     CircularProgressIndicator(color: Colors.white),
                     SizedBox(height: 16),
-                    Text(
-                      'Avatar yükleniyor...',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
-                    ),
+                    Text('Resim yükleniyor...', style: TextStyle(color: Colors.white)),
                   ],
                 ),
               ),
@@ -169,132 +169,112 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildProfileContent(ThemeData theme, UserProfile profile) {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          const SizedBox(height: 32),
-          
-          // Avatar - Clickable
-          InkWell(
-            onTap: _pickImage,
-            borderRadius: BorderRadius.circular(100),
-            child: Stack(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: theme.colorScheme.primary,
-                      width: 3,
-                    ),
-                  ),
-                  child: CircleAvatar(
-                    radius: 75,
-                    backgroundColor: Colors.grey[700],
-                    backgroundImage: profile.avatarUrl != null
-                        ? NetworkImage(profile.avatarUrl!)
-                        : null,
-                    child: profile.avatarUrl == null
-                        ? const Icon(Icons.person, size: 60, color: Colors.white)
-                        : null,
-                  ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: theme.scaffoldBackgroundColor,
-                        width: 2,
+    return Column(
+      children: [
+        // Compact Profile Header
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              // Avatar
+              InkWell(
+                onTap: _pickImage,
+                borderRadius: BorderRadius.circular(50),
+                child: Stack(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: theme.colorScheme.primary, width: 2),
+                      ),
+                      child: CircleAvatar(
+                        radius: 40,
+                        backgroundColor: Colors.grey[700],
+                        backgroundImage: profile.avatarUrl != null
+                            ? NetworkImage(profile.avatarUrl!)
+                            : null,
+                        child: profile.avatarUrl == null
+                            ? const Icon(Icons.person, size: 40, color: Colors.white)
+                            : null,
                       ),
                     ),
-                    child: const Icon(Icons.camera_alt, size: 20, color: Colors.black),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Name
-          Text(
-            profile.fullName ?? 'İsim Girilmemiş',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          // Position
-          if (profile.position != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: theme.colorScheme.primary,
-                  width: 1.5,
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.camera_alt, size: 14, color: Colors.black),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: Text(
-                AppConstants.getPositionName(profile.position!) ?? profile.position!,
-                style: TextStyle(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.bold,
+              const SizedBox(width: 16),
+              // Name and Position
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      profile.fullName ?? 'İsim Girilmemiş',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    if (profile.position != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: theme.colorScheme.primary),
+                        ),
+                        child: Text(
+                          AppConstants.getPositionName(profile.position!) ?? profile.position!,
+                          style: TextStyle(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    if (profile.bio != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        profile.bio!,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: Colors.grey[400], fontSize: 13),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-            ),
-
-          const SizedBox(height: 24),
-
-          // Bio
-          if (profile.bio != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Text(
-                profile.bio!,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey,
-                ),
-              ),
-            ),
-
-          const SizedBox(height: 32),
-
-          // Edit Button
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton.icon(
+              // Edit button
+              IconButton(
                 onPressed: () => _showEditDialog(profile),
-                icon: const Icon(Icons.edit),
-                label: const Text('Düzenle'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+                icon: Icon(Icons.edit, color: theme.colorScheme.primary),
               ),
-            ),
+            ],
           ),
+        ),
 
-          const SizedBox(height: 32),
-        ],
-      ),
+        // Divider
+        Container(height: 1, color: Colors.grey[800]),
+
+        // Posts tabs
+        if (_userId != null)
+          Expanded(
+            child: ProfilePostsTab(userId: _userId!),
+          ),
+      ],
     );
   }
 }

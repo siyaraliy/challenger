@@ -7,6 +7,7 @@ import '../../../../core/di/service_locator.dart';
 import '../../../../core/models/user_profile.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../bloc/profile_bloc.dart';
+import '../widgets/profile_posts_tab.dart';
 
 class UserProfileScreen extends StatelessWidget {
   const UserProfileScreen({super.key});
@@ -88,110 +89,123 @@ class UserProfileView extends StatelessWidget {
   }
 
   Widget _buildProfileContent(BuildContext context, ThemeData theme, UserProfile profile) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          // Avatar
-          GestureDetector(
-            onTap: () => _pickAndUploadAvatar(context),
-            child: Stack(
-              children: [
+    return Column(
+      children: [
+        // Profile header section
+        Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              // Avatar
+              GestureDetector(
+                onTap: () => _pickAndUploadAvatar(context),
+                child: Stack(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: theme.colorScheme.primary, width: 3),
+                      ),
+                      child: CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Colors.grey[800],
+                        backgroundImage: profile.avatarUrl != null 
+                            ? NetworkImage(profile.avatarUrl!) 
+                            : null,
+                        child: profile.avatarUrl == null 
+                            ? const Icon(Icons.person, size: 50, color: Colors.white)
+                            : null,
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.camera_alt, size: 16, color: Colors.black),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Full Name
+              Text(
+                profile.fullName ?? 'İsimsiz Kullanıcı',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              // Position
+              if (profile.position != null)
                 Container(
-                  padding: const EdgeInsets.all(4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: theme.colorScheme.primary, width: 3),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: theme.colorScheme.primary),
                   ),
-                  child: CircleAvatar(
-                    radius: 60,
-                    backgroundColor: Colors.grey[800],
-                    backgroundImage: profile.avatarUrl != null 
-                        ? NetworkImage(profile.avatarUrl!) 
-                        : null,
-                    child: profile.avatarUrl == null 
-                        ? const Icon(Icons.person, size: 60, color: Colors.white)
-                        : null,
+                  child: Text(
+                    AppConstants.getPositionName(profile.position!) ?? profile.position!,
+                    style: TextStyle(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.camera_alt, size: 20, color: Colors.black),
-                  ),
+
+              if (profile.bio != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  profile.bio!,
+                  style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+                  textAlign: TextAlign.center,
                 ),
               ],
-            ),
-          ),
 
-          const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
-          // Full Name
-          Text(
-            profile.fullName ?? 'İsimsiz Kullanıcı',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          // Position
-          if (profile.position != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: theme.colorScheme.primary),
-              ),
-              child: Text(
-                AppConstants.getPositionName(profile.position!) ?? profile.position!,
-                style: TextStyle(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.bold,
+              // Edit Button
+              SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: OutlinedButton.icon(
+                  onPressed: () => _showEditDialog(context, profile),
+                  icon: const Icon(Icons.edit, size: 18),
+                  label: const Text('Profili Düzenle'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: theme.colorScheme.primary,
+                    side: BorderSide(color: theme.colorScheme.primary),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
               ),
-            ),
-
-          const SizedBox(height: 16),
-
-          // Bio
-          if (profile.bio != null)
-            Text(
-              profile.bio!,
-              style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
-              textAlign: TextAlign.center,
-            ),
-
-          const SizedBox(height: 32),
-
-          // Edit Button
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton.icon(
-              onPressed: () => _showEditDialog(context, profile),
-              icon: const Icon(Icons.edit),
-              label: const Text('Profili Düzenle'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: Colors.black,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-            ),
+            ],
           ),
-        ],
-      ),
+        ),
+
+        // Divider
+        Container(height: 1, color: Colors.grey[800]),
+
+        // Posts tabs
+        Expanded(
+          child: ProfilePostsTab(userId: userId),
+        ),
+      ],
     );
   }
 

@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { SupabaseModule } from './supabase/supabase.module';
 import { StaticDataModule } from './static-data/static-data.module';
 import { TeamAuthModule } from './auth/team-auth.module';
+import { PostsModule } from './posts/posts.module';
 import { Position, MatchType, ReportReason } from './static-data/entities';
 
 @Module({
@@ -21,8 +22,10 @@ import { Position, MatchType, ReportReason } from './static-data/entities';
     SupabaseModule,
     StaticDataModule,
     TeamAuthModule,
+    PostsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule { }
+

@@ -1,21 +1,19 @@
 import 'package:flutter/material.dart';
+import '../models/post.dart';
+import 'video_player_widget.dart';
 
 class PostCard extends StatelessWidget {
-  final String teamName;
-  final String timeAgo;
-  final String imageUrl;
-  final String content;
-  final int likes;
-  final int comments;
+  final Post post;
+  final VoidCallback? onLikeTap;
+  final VoidCallback? onCommentTap;
+  final VoidCallback? onChallengeTap;
 
   const PostCard({
     super.key,
-    required this.teamName,
-    required this.timeAgo,
-    required this.imageUrl,
-    required this.content,
-    required this.likes,
-    required this.comments,
+    required this.post,
+    this.onLikeTap,
+    this.onCommentTap,
+    this.onChallengeTap,
   });
 
   @override
@@ -43,30 +41,52 @@ class PostCard extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                const CircleAvatar(
-                  backgroundColor: Colors.grey,
-                  child: Icon(Icons.shield, color: Colors.white),
+                CircleAvatar(
+                  backgroundColor: post.authorType == 'team' 
+                      ? theme.colorScheme.primary 
+                      : Colors.grey,
+                  backgroundImage: post.authorAvatar != null 
+                      ? NetworkImage(post.authorAvatar!) 
+                      : null,
+                  child: post.authorAvatar == null 
+                      ? Icon(
+                          post.authorType == 'team' ? Icons.shield : Icons.person,
+                          color: Colors.white,
+                        )
+                      : null,
                 ),
                 const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      teamName,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              post.authorName,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (post.authorType == 'team') ...[
+                            const SizedBox(width: 6),
+                            Icon(Icons.verified, size: 16, color: theme.colorScheme.primary),
+                          ],
+                        ],
                       ),
-                    ),
-                    Text(
-                      timeAgo,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.grey,
+                      Text(
+                        post.timeAgo,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.grey,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-                const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.more_horiz, color: Colors.grey),
                   onPressed: () {},
@@ -75,14 +95,9 @@ class PostCard extends StatelessWidget {
             ),
           ),
           
-          // Image
-          Container(
-            height: 250,
-            width: double.infinity,
-            color: Colors.black26,
-            child: const Icon(Icons.image, size: 50, color: Colors.white24), // Placeholder
-            // Image.network(imageUrl, fit: BoxFit.cover) would go here
-          ),
+          // Media
+          if (post.mediaType != MediaType.none && post.mediaUrl != null)
+            _buildMedia(context, post),
           
           // Actions
           Padding(
@@ -92,38 +107,51 @@ class PostCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    _ActionButton(icon: Icons.favorite_border, label: '$likes'),
-                    const SizedBox(width: 16),
-                    _ActionButton(icon: Icons.chat_bubble_outline, label: '$comments'),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.4),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: const Text(
-                        'Meydan Oku',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                    _ActionButton(
+                      icon: post.isLiked ? Icons.favorite : Icons.favorite_border,
+                      label: '${post.likesCount}',
+                      color: post.isLiked ? Colors.red : Colors.white70,
+                      onTap: onLikeTap,
                     ),
+                    const SizedBox(width: 16),
+                    _ActionButton(
+                      icon: Icons.chat_bubble_outline,
+                      label: '${post.commentsCount}',
+                      onTap: onCommentTap,
+                    ),
+                    const Spacer(),
+                    if (post.authorType == 'team')
+                      GestureDetector(
+                        onTap: onChallengeTap,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: theme.colorScheme.primary.withValues(alpha: 0.4),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Text(
+                            'Meydan Oku',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  content,
+                  post.content,
                   style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70),
                 ),
               ],
@@ -133,22 +161,93 @@ class PostCard extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildMedia(BuildContext context, Post post) {
+    if (post.mediaType == MediaType.image) {
+      return Container(
+        constraints: const BoxConstraints(maxHeight: 300),
+        width: double.infinity,
+        child: Image.network(
+          post.mediaUrl!,
+          fit: BoxFit.cover,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Container(
+              height: 200,
+              color: Colors.black26,
+              child: const Center(child: CircularProgressIndicator()),
+            );
+          },
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              height: 200,
+              color: Colors.black26,
+              child: const Center(
+                child: Icon(Icons.broken_image, size: 50, color: Colors.white24),
+              ),
+            );
+          },
+        ),
+      );
+    } else if (post.mediaType == MediaType.video) {
+      // Video thumbnail with play button - opens fullscreen player on tap
+      return GestureDetector(
+        onTap: () => VideoPlayerDialog.show(
+          context,
+          post.mediaUrl!,
+          thumbnailUrl: post.mediaThumbnailUrl,
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              height: 250,
+              width: double.infinity,
+              color: Colors.black,
+              child: post.mediaThumbnailUrl != null
+                  ? Image.network(post.mediaThumbnailUrl!, fit: BoxFit.cover)
+                  : const Icon(Icons.videocam, size: 50, color: Colors.white24),
+            ),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                color: Colors.black54,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.play_arrow, size: 40, color: Colors.white),
+            ),
+          ],
+        ),
+      );
+    }
+    return const SizedBox.shrink();
+  }
 }
 
 class _ActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
+  final Color? color;
+  final VoidCallback? onTap;
 
-  const _ActionButton({required this.icon, required this.label});
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    this.color,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, color: Colors.white70, size: 24),
-        const SizedBox(width: 6),
-        Text(label, style: const TextStyle(color: Colors.white70)),
-      ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Icon(icon, color: color ?? Colors.white70, size: 24),
+          const SizedBox(width: 6),
+          Text(label, style: TextStyle(color: color ?? Colors.white70)),
+        ],
+      ),
     );
   }
 }

@@ -1,0 +1,39 @@
+﻿Analyzing mobile...                                             
+
+   info - Constructors in '@immutable' classes should be declared as 'const' - lib\core\models\app_mode_state.dart:21:3 - prefer_const_constructors_in_immutables
+   info - Use an initializing formal to assign a parameter to a field - lib\core\models\app_mode_state.dart:25:9 - prefer_initializing_formals
+   info - Use an initializing formal to assign a parameter to a field - lib\core\models\app_mode_state.dart:26:9 - prefer_initializing_formals
+   info - Don't use 'BuildContext's across async gaps - lib\core\widgets\mode_switcher_button.dart:25:38 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\core\widgets\mode_switcher_button.dart:26:34 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\core\widgets\mode_switcher_button.dart:31:11 - use_build_context_synchronously
+warning - Unnecessary cast - lib\features\auth\presentation\bloc\auth_bloc.dart:128:32 - unnecessary_cast
+warning - Unnecessary cast - lib\features\auth\presentation\bloc\auth_bloc.dart:163:30 - unnecessary_cast
+warning - Unnecessary cast - lib\features\auth\presentation\bloc\auth_bloc.dart:187:30 - unnecessary_cast
+warning - Unnecessary cast - lib\features\auth\presentation\bloc\auth_bloc.dart:224:30 - unnecessary_cast
+   info - Don't use 'BuildContext's across async gaps - lib\features\home\presentation\screens\home_screen.dart:61:28 - use_build_context_synchronously
+warning - The declaration '_checkAndNavigateToTeam' isn't referenced - lib\features\profile\presentation\screens\profile_screen.dart:40:16 - unused_element
+   info - Don't use 'BuildContext's across async gaps - lib\features\profile\presentation\screens\profile_screen.dart:80:9 - use_build_context_synchronously
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\features\profile\presentation\screens\user_profile_screen.dart:243:19 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\features\profile\presentation\widgets\profile_edit_dialog.dart:110:15 - deprecated_member_use
+warning - Unused import: 'package:flutter_bloc/flutter_bloc.dart' - lib\features\team\presentation\screens\create_team_screen.dart:3:8 - unused_import
+
+flutter : 16 issues f
+ound. (ran in 2.6s)
+At line:1 char:1
++ flutter analyze 2>&
+1 | Out-File -FilePat
+h analysis_errors.txt
+ -Encodi ...
++ ~~~~~~~~~~~~~~~~~~~
+~
+    + CategoryInfo   
+           : NotSpe  
+  cified: (16 issu   
+ es found. (ran i    
+n 2.6s):String)     [
+], RemoteExcept    io
+n
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 

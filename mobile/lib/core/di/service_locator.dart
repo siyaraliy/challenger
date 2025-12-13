@@ -9,6 +9,7 @@ import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/profile/data/repositories/profile_repository.dart';
 import '../../features/profile/presentation/bloc/profile_bloc.dart';
 import '../../features/team/data/repositories/team_repository.dart';
+import '../../features/home/data/posts_repository.dart';
 
 final getIt = GetIt.instance;
 
@@ -40,6 +41,11 @@ Future<void> init() async {
       () => TeamRepository(supabaseClient),
     );
     
+    // Posts Repository
+    getIt.registerLazySingleton<PostsRepository>(
+      () => PostsRepository(supabaseClient),
+    );
+    
     // Blocs (Supabase-dependent)
     getIt.registerFactory(() => ProfileBloc(getIt<ProfileRepository>()));
   } else {
@@ -49,3 +55,4 @@ Future<void> init() async {
   // Blocs (Always available)
   getIt.registerLazySingleton(() => AuthBloc(authRepository: getIt()));
 }
+
