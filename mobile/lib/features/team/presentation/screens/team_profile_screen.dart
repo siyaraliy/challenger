@@ -9,6 +9,7 @@ import '../../../../core/widgets/video_player_widget.dart';
 import '../../../../core/widgets/mode_switcher_button.dart';
 import '../../../home/data/posts_repository.dart';
 import '../../data/repositories/team_repository.dart';
+import '../../data/repositories/challenge_repository.dart';
 
 class TeamProfileScreen extends StatefulWidget {
   const TeamProfileScreen({super.key});
@@ -21,11 +22,14 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> with SingleTicker
   late TabController _tabController;
   final PostsRepository _postsRepo = getIt<PostsRepository>();
   final TeamRepository _teamRepo = getIt<TeamRepository>();
+  final ChallengeRepository _challengeRepo = getIt<ChallengeRepository>();
   
   Team? _team;
   List<Post> _mediaPosts = [];
   List<Post> _textPosts = [];
   bool _isLoading = true;
+  int _totalPoints = 0;
+  int _matchesPlayed = 0;
 
   @override
   void initState() {
@@ -50,13 +54,17 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> with SingleTicker
       // Load team info
       final team = await _teamRepo.getTeam(teamId);
       
+      // Load team points
+      final points = await _challengeRepo.getTeamPoints(teamId);
+      
       // Load team posts
-      // Note: We'll use a simple filter since backend doesn't have team-specific endpoint yet
       final allPosts = await _postsRepo.getFeed();
       final teamPosts = allPosts.where((p) => p.authorType == 'team' && p.authorId == teamId).toList();
       
       setState(() {
         _team = team;
+        _totalPoints = points?['total_points'] ?? 0;
+        _matchesPlayed = points?['matches_played'] ?? 0;
         _mediaPosts = teamPosts.where((p) => p.mediaType != MediaType.none).toList();
         _textPosts = teamPosts.where((p) => p.mediaType == MediaType.none).toList();
         _isLoading = false;
@@ -109,6 +117,47 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> with SingleTicker
                             style: theme.textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          
+                          // Points display
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  theme.colorScheme.primary.withOpacity(0.3),
+                                  Colors.amber.withOpacity(0.3),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.amber.withOpacity(0.5)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.emoji_events, color: Colors.amber, size: 20),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '$_totalPoints Puan',
+                                  style: const TextStyle(
+                                    color: Colors.amber,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Container(width: 1, height: 16, color: Colors.amber.withOpacity(0.3)),
+                                const SizedBox(width: 12),
+                                Text(
+                                  '$_matchesPlayed Maç',
+                                  style: TextStyle(
+                                    color: Colors.grey[400],
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],

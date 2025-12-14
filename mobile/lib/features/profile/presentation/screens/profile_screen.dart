@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/cubit/mode_cubit.dart';
 import '../../../../core/models/user_profile.dart';
 import '../../../../core/widgets/mode_switcher_button.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -58,7 +59,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final team = await teamRepo.getMyTeam(userId);
 
       if (team != null && mounted) {
-        context.push('/team/${team.id}');
+        // Switch to team mode and navigate
+        final modeCubit = context.read<ModeCubit>();
+        await modeCubit.switchToTeam(team.id, team.name);
+        if (mounted) {
+          context.go('/team-home');
+        }
       } else if (mounted) {
         context.push('/create-team');
       }
@@ -232,7 +238,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                          color: theme.colorScheme.primary.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: theme.colorScheme.primary),
                         ),
@@ -266,6 +272,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
 
+        // Team Section Card
+        _buildTeamSection(theme),
+
         // Divider
         Container(height: 1, color: Colors.grey[800]),
 
@@ -275,6 +284,69 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: ProfilePostsTab(userId: _userId!),
           ),
       ],
+    );
+  }
+
+  Widget _buildTeamSection(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.primary.withOpacity(0.2),
+              Colors.transparent,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: theme.colorScheme.primary.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.shield, color: theme.colorScheme.primary, size: 28),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Takım',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    'Takım oluştur veya mevcut takıma geç',
+                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            ElevatedButton(
+              onPressed: _checkAndNavigateToTeam,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: const Text('Git'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

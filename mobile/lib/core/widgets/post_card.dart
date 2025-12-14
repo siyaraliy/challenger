@@ -7,6 +7,7 @@ class PostCard extends StatelessWidget {
   final VoidCallback? onLikeTap;
   final VoidCallback? onCommentTap;
   final VoidCallback? onChallengeTap;
+  final bool showChallengeButton;
 
   const PostCard({
     super.key,
@@ -14,6 +15,7 @@ class PostCard extends StatelessWidget {
     this.onLikeTap,
     this.onCommentTap,
     this.onChallengeTap,
+    this.showChallengeButton = true,
   });
 
   @override
@@ -120,29 +122,36 @@ class PostCard extends StatelessWidget {
                       onTap: onCommentTap,
                     ),
                     const Spacer(),
+                    // DEBUG: Always show button for team posts
                     if (post.authorType == 'team')
-                      GestureDetector(
-                        onTap: onChallengeTap,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
-                            ),
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: theme.colorScheme.primary.withValues(alpha: 0.4),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: onChallengeTap,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Ink(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
                               ),
-                            ],
-                          ),
-                          child: const Text(
-                            'Meydan Oku',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: theme.colorScheme.primary.withValues(alpha: 0.4),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              child: const Text(
+                                'Meydan Oku',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
                           ),
                         ),

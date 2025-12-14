@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/models/post.dart';
@@ -16,6 +17,7 @@ class ProfilePostsTab extends StatefulWidget {
 class _ProfilePostsTabState extends State<ProfilePostsTab> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final PostsRepository _postsRepo = getIt<PostsRepository>();
+  StreamSubscription? _postSubscription;
   
   List<Post> _mediaPosts = [];
   List<Post> _textPosts = [];
@@ -28,10 +30,17 @@ class _ProfilePostsTabState extends State<ProfilePostsTab> with SingleTickerProv
     print('ProfilePostsTab initState - userId: ${widget.userId}');
     _tabController = TabController(length: 2, vsync: this);
     _loadPosts();
+    
+    // Listen for new posts
+    _postSubscription = _postsRepo.onPostCreated.listen((_) {
+      print('ProfilePostsTab: New post detected, reloading...');
+      _loadPosts();
+    });
   }
 
   @override
   void dispose() {
+    _postSubscription?.cancel();
     _tabController.dispose();
     super.dispose();
   }

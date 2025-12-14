@@ -67,70 +67,96 @@ class AppRouter {
         path: '/create-post',
         builder: (context, state) => const CreatePostScreen(),
       ),
-      ShellRoute(
-        navigatorKey: _shellNavigatorKey,
-        builder: (context, state, child) {
-          return ScaffoldWithNavBar(child: child);
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return ScaffoldWithNavBar(navigationShell: navigationShell);
         },
-        routes: [
-          GoRoute(
-            path: '/home',
-            builder: (context, state) => const HomeScreen(),
+        branches: [
+          // USER MODE BRANCHES (0-4)
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/home',
+                builder: (context, state) => const HomeScreen(),
+              ),
+            ],
           ),
-          GoRoute(
-            path: '/discover',
-            builder: (context, state) => const DiscoverScreen(),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/discover',
+                builder: (context, state) => const DiscoverScreen(),
+              ),
+            ],
           ),
-          GoRoute(
-            path: '/ranking',
-            builder: (context, state) => const RankingScreen(),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/ranking',
+                builder: (context, state) => const RankingScreen(),
+              ),
+            ],
           ),
-          GoRoute(
-            path: '/chat',
-            builder: (context, state) => const ChatScreen(),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/chat',
+                builder: (context, state) => const ChatScreen(),
+              ),
+            ],
           ),
-          GoRoute(
-            path: '/profile',
-            builder: (context, state) => BlocProvider(
-              create: (context) => getIt<ProfileBloc>(),
-              child: const ProfileScreen(),
-            ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/profile',
+                builder: (context, state) => BlocProvider(
+                  create: (context) => getIt<ProfileBloc>(),
+                  child: const ProfileScreen(),
+                ),
+              ),
+            ],
           ),
-          GoRoute(
-            path: '/create-team',
-            builder: (context, state) => const CreateTeamScreen(),
+          
+          // TEAM MODE BRANCHES (5-9)
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/team-home',
+                builder: (context, state) => const TeamHomeScreen(),
+              ),
+            ],
           ),
-          GoRoute(
-            path: '/team/:teamId',
-            builder: (context, state) {
-              final teamId = state.pathParameters['teamId']!;
-              return TeamDetailScreen(teamId: teamId);
-            },
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/team-matches',
+                builder: (context, state) => const TeamMatchesScreen(),
+              ),
+            ],
           ),
-          // TEAM MODE ROUTES
-          GoRoute(
-            path: '/team-home',
-            builder: (context, state) => const TeamHomeScreen(),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/team-squad',
+                builder: (context, state) => const TeamSquadScreen(),
+              ),
+            ],
           ),
-          GoRoute(
-            path: '/team-matches',
-            builder: (context, state) => const TeamMatchesScreen(),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/team-chat',
+                builder: (context, state) => const TeamChatScreen(),
+              ),
+            ],
           ),
-          GoRoute(
-            path: '/team-squad',
-            builder: (context, state) => const TeamSquadScreen(),
-          ),
-          GoRoute(
-            path: '/team-chat',
-            builder: (context, state) => const TeamChatScreen(),
-          ),
-          GoRoute(
-            path: '/team-settings',
-            builder: (context, state) => const TeamSettingsScreen(),
-          ),
-          GoRoute(
-            path: '/team-profile',
-            builder: (context, state) => const TeamProfileScreen(),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/team-profile',
+                builder: (context, state) => const TeamProfileScreen(),
+              ),
+            ],
           ),
         ],
       ),
@@ -157,16 +183,19 @@ class _GoRouterRefreshStream extends ChangeNotifier {
 }
 
 class ScaffoldWithNavBar extends StatelessWidget {
-  final Widget child;
+  final StatefulNavigationShell navigationShell;
 
-  const ScaffoldWithNavBar({required this.child, super.key});
+  const ScaffoldWithNavBar({
+    required this.navigationShell,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ModeCubit, AppModeState>(
       builder: (context, modeState) {
         return Scaffold(
-          body: child,
+          body: navigationShell,
           bottomNavigationBar: _buildBottomNav(context, modeState),
         );
       },
@@ -175,9 +204,13 @@ class ScaffoldWithNavBar extends StatelessWidget {
 
   Widget _buildBottomNav(BuildContext context, AppModeState modeState) {
     if (modeState.isUserMode) {
+      // Ensure we are showing a user tab (0-4)
+      final currentIndex = navigationShell.currentIndex;
+      final effectiveIndex = (currentIndex >= 0 && currentIndex <= 4) ? currentIndex : 0;
+
       return BottomNavigationBar(
-        currentIndex: _calculateSelectedIndexUser(context),
-        onTap: (int idx) => _onUserItemTapped(idx, context),
+        currentIndex: effectiveIndex,
+        onTap: (int idx) => _onItemTapped(idx, context),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Anasayfa'),
           BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Keşfet'),
@@ -187,10 +220,14 @@ class ScaffoldWithNavBar extends StatelessWidget {
         ],
       );
     } else {
-      // Team mode nav
+      // Ensure we are showing a team tab (5-9)
+      // Map global index (5-9) to local index (0-4)
+      final currentIndex = navigationShell.currentIndex;
+      final effectiveIndex = (currentIndex >= 5 && currentIndex <= 9) ? currentIndex - 5 : 0;
+      
       return BottomNavigationBar(
-        currentIndex: _calculateSelectedIndexTeam(context),
-        onTap: (int idx) => _onTeamItemTapped(idx, context),
+        currentIndex: effectiveIndex,
+        onTap: (int idx) => _onItemTapped(idx + 5, context),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Takım'),
           BottomNavigationBarItem(icon: Icon(Icons.sports_soccer), label: 'Maçlar'),
@@ -202,63 +239,15 @@ class ScaffoldWithNavBar extends StatelessWidget {
     }
   }
 
-  static int _calculateSelectedIndexUser(BuildContext context) {
-    final String location = GoRouterState.of(context).uri.path;
-    if (location.startsWith('/home')) return 0;
-    if (location.startsWith('/discover')) return 1;
-    if (location.startsWith('/ranking')) return 2;
-    if (location.startsWith('/chat')) return 3;
-    if (location.startsWith('/profile')) return 4;
-    return 0;
-  }
-
-  static int _calculateSelectedIndexTeam(BuildContext context) {
-    final String location = GoRouterState.of(context).uri.path;
-    if (location.startsWith('/team-home')) return 0;
-    if (location.startsWith('/team-matches')) return 1;
-    if (location.startsWith('/team-squad')) return 2;
-    if (location.startsWith('/team-chat')) return 3;
-    if (location.startsWith('/team-profile')) return 4;
-    return 0;
-  }
-
-  void _onUserItemTapped(int index, BuildContext context) {
-    switch (index) {
-      case 0:
-        GoRouter.of(context).go('/home');
-        break;
-      case 1:
-        GoRouter.of(context).go('/discover');
-        break;
-      case 2:
-        GoRouter.of(context).go('/ranking');
-        break;
-      case 3:
-        GoRouter.of(context).go('/chat');
-        break;
-      case 4:
-        GoRouter.of(context).go('/profile');
-        break;
-    }
-  }
-
-  void _onTeamItemTapped(int index, BuildContext context) {
-    switch (index) {
-      case 0:
-        GoRouter.of(context).go('/team-home');
-        break;
-      case 1:
-        GoRouter.of(context).go('/team-matches');
-        break;
-      case 2:
-        GoRouter.of(context).go('/team-squad');
-        break;
-      case 3:
-        GoRouter.of(context).go('/team-chat');
-        break;
-      case 4:
-        GoRouter.of(context).go('/team-profile');
-        break;
-    }
+  void _onItemTapped(int index, BuildContext context) {
+    // When switching branches, use goBranch.
+    // This preserves `AutomaticKeepAliveClientMixin` state.
+    navigationShell.goBranch(
+      index,
+      // A common pattern when clicking the bottom navigation bar is to support
+      // navigating to the initial location when tapping the item that is
+      // already active.
+      initialLocation: index == navigationShell.currentIndex,
+    );
   }
 }

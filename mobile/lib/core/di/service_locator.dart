@@ -9,6 +9,7 @@ import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/profile/data/repositories/profile_repository.dart';
 import '../../features/profile/presentation/bloc/profile_bloc.dart';
 import '../../features/team/data/repositories/team_repository.dart';
+import '../../features/team/data/repositories/challenge_repository.dart';
 import '../../features/home/data/posts_repository.dart';
 
 final getIt = GetIt.instance;
@@ -44,6 +45,11 @@ Future<void> init() async {
     // Posts Repository
     getIt.registerLazySingleton<PostsRepository>(
       () => PostsRepository(supabaseClient),
+    );
+    
+    // Challenge Repository
+    getIt.registerLazySingleton<ChallengeRepository>(
+      () => ChallengeRepository(supabaseClient),
     );
     
     // Blocs (Supabase-dependent)

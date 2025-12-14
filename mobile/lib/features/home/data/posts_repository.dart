@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -7,11 +8,75 @@ import '../../../core/models/post.dart';
 class PostsRepository {
   final SupabaseClient _supabase;
   final Dio _dio;
+  
+  final _postCreatedController = StreamController<void>.broadcast();
+  Stream<void> get onPostCreated => _postCreatedController.stream;
 
   PostsRepository(this._supabase)
       : _dio = Dio(BaseOptions(baseUrl: ApiConfig.baseUrl));
 
   String? get _accessToken => _supabase.auth.currentSession?.accessToken;
+
+  // Create post - directly to Supabase
+  Future<Post> createPost({
+    required String content,
+    MediaType mediaType = MediaType.none,
+    String? mediaUrl,
+    String? mediaThumbnailUrl,
+    String? contextType, // 'user' or 'team'
+    String? contextId,
+  }) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) {
+        throw Exception('Kullanıcı oturumu bulunamadı');
+      }
+
+      // Determine author type and id
+      final authorType = contextType ?? 'user';
+      final authorId = contextId ?? userId;
+
+      print('Creating post: authorType=$authorType, authorId=$authorId');
+
+      final postData = {
+        'author_type': authorType,
+        'author_id': authorId,
+        'content': content,
+        'media_type': mediaType == MediaType.none ? 'none' : mediaType.name,
+        if (mediaUrl != null) 'media_url': mediaUrl,
+        if (mediaThumbnailUrl != null) 'media_thumbnail_url': mediaThumbnailUrl,
+      };
+
+      final response = await _supabase
+          .from('posts')
+          .insert(postData)
+          .select()
+          .single();
+
+      print('Post created successfully: $response');
+
+      // Get user profile for author info
+      final profile = await _supabase
+          .from('profiles')
+          .select('full_name, avatar_url')
+          .eq('id', authorId)
+          .maybeSingle();
+
+      final result = <String, dynamic>{
+        ...Map<String, dynamic>.from(response),
+        'author_name': profile?['full_name'] ?? 'Anonim',
+        'author_avatar': profile?['avatar_url'],
+      };
+      
+      // Notify listeners
+      _postCreatedController.add(null);
+
+      return Post.fromJson(result);
+    } catch (e) {
+      print('Create post error: $e');
+      throw Exception('Post oluşturulamadı: $e');
+    }
+  }
 
   Map<String, String> get _authHeaders => {
         if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
@@ -94,9 +159,9 @@ class PostsRepository {
       
       // Filter by type if specified
       if (type == 'media') {
-        query = query.or('media_type.eq.image,media_type.eq.video');
+        // query = query.or('media_type.eq.image,media_type.eq.video');
       } else if (type == 'text') {
-        query = query.or('media_type.is.null,media_type.eq.none');
+        // query = query.or('media_type.is.null,media_type.eq.none');
       } else if (type == 'user') {
         query = query.eq('author_type', 'user');
       } else if (type == 'team') {
@@ -143,7 +208,20 @@ class PostsRepository {
             'author_avatar': authorAvatar,
           };
           
-          posts.add(Post.fromJson(postData));
+          final post = Post.fromJson(postData);
+
+          // Client-side filtering because Supabase OR syntax can be tricky with nulls
+          if (type == 'media') {
+            if (post.mediaType == MediaType.image || post.mediaType == MediaType.video) {
+              posts.add(post);
+            }
+          } else if (type == 'text') {
+            if (post.mediaType == null || post.mediaType == MediaType.none) {
+              posts.add(post);
+            }
+          } else {
+            posts.add(post);
+          }
         } catch (e) {
           print('Error parsing user post: $e');
         }
@@ -157,63 +235,7 @@ class PostsRepository {
     }
   }
 
-  // Create post - directly to Supabase
-  Future<Post> createPost({
-    required String content,
-    MediaType mediaType = MediaType.none,
-    String? mediaUrl,
-    String? mediaThumbnailUrl,
-    String? contextType, // 'user' or 'team'
-    String? contextId,
-  }) async {
-    try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) {
-        throw Exception('Kullanıcı oturumu bulunamadı');
-      }
 
-      // Determine author type and id
-      final authorType = contextType ?? 'user';
-      final authorId = contextId ?? userId;
-
-      print('Creating post: authorType=$authorType, authorId=$authorId');
-
-      final postData = {
-        'author_type': authorType,
-        'author_id': authorId,
-        'content': content,
-        'media_type': mediaType == MediaType.none ? 'none' : mediaType.name,
-        if (mediaUrl != null) 'media_url': mediaUrl,
-        if (mediaThumbnailUrl != null) 'media_thumbnail_url': mediaThumbnailUrl,
-      };
-
-      final response = await _supabase
-          .from('posts')
-          .insert(postData)
-          .select()
-          .single();
-
-      print('Post created successfully: $response');
-
-      // Get user profile for author info
-      final profile = await _supabase
-          .from('profiles')
-          .select('full_name, avatar_url')
-          .eq('id', authorId)
-          .maybeSingle();
-
-      final result = <String, dynamic>{
-        ...Map<String, dynamic>.from(response),
-        'author_name': profile?['full_name'] ?? 'Anonim',
-        'author_avatar': profile?['avatar_url'],
-      };
-
-      return Post.fromJson(result);
-    } catch (e) {
-      print('Create post error: $e');
-      throw Exception('Post oluşturulamadı: $e');
-    }
-  }
 
   // Toggle like - directly to Supabase
   Future<bool> toggleLike(String postId) async {

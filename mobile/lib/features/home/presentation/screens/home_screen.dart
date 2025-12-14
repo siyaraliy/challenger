@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/core/widgets/post_card.dart';
 import 'package:mobile/core/di/service_locator.dart';
 import 'package:mobile/core/models/post.dart';
+import 'package:mobile/core/cubit/mode_cubit.dart';
+import 'package:mobile/core/models/app_mode_state.dart';
+import '../../../team/presentation/screens/create_challenge_screen.dart';
 import '../../data/posts_repository.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -12,12 +16,15 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMixin {
   final PostsRepository _postsRepo = getIt<PostsRepository>();
   
   List<Post> _posts = [];
   bool _isLoading = true;
   String? _error;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -67,8 +74,46 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _challengeTeam(Post post) {
+    if (!mounted) return;
+
+    final modeState = context.read<ModeCubit>().state;
+    
+    if (!modeState.isTeamMode) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Meydan okumak için takım moduna geçmelisiniz')),
+      );
+      return;
+    }
+    
+    // Check if trying to challenge own team
+    if (modeState.teamId == post.authorId) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Kendi takımınıza meydan okuyamazsınız')),
+      );
+      return;
+    }
+    
+    // Navigate to create challenge with the challenged team
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreateChallengeScreen(
+          challengerTeamId: modeState.teamId!,
+          preselectedTeamId: post.authorId,
+        ),
+      ),
+    );
+  }
+
+  bool _shouldShowChallengeButton(Post post) {
+    // Show button on all team posts - the action handler will check permissions
+    return post.authorType == 'team';
+  }
+
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -78,33 +123,29 @@ class _HomeScreenState extends State<HomeScreen> {
           style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w900,
             letterSpacing: 1.5,
-            fontStyle: FontStyle.italic,
             color: theme.colorScheme.primary,
           ),
         ),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_none_outlined),
+            icon: const Icon(Icons.notifications_outlined),
             onPressed: () {},
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _loadPosts,
-        child: _buildBody(theme),
-      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/create-post'),
         icon: const Icon(Icons.add),
-        label: const Text('Paylaş'),
+        label: const Text('Gönderi'),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: Colors.black,
       ),
+      body: _buildBody(context, theme),
     );
   }
 
-  Widget _buildBody(ThemeData theme) {
+  Widget _buildBody(BuildContext context, ThemeData theme) {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -148,21 +189,32 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    return ListView(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      children: [
-        // Posts
-        ..._posts.map((post) => Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: PostCard(
-            post: post,
-            onLikeTap: () => _toggleLike(post),
-            onCommentTap: () {
-              // TODO: Navigate to comments
-            },
+    return BlocBuilder<ModeCubit, AppModeState>(
+      builder: (context, modeState) {
+        return RefreshIndicator(
+          onRefresh: _loadPosts,
+          child: ListView(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            children: [
+              // Posts
+              ..._posts.map((post) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: PostCard(
+                    post: post,
+                    onLikeTap: () => _toggleLike(post),
+                    onCommentTap: () {
+                      // TODO: Navigate to comments
+                    },
+                    showChallengeButton: true,
+                    onChallengeTap: () => _challengeTeam(post),
+                  ),
+                );
+              }),
+            ],
           ),
-        )),
-      ],
+        );
+      },
     );
   }
 }
