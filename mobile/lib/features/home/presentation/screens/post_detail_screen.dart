@@ -50,8 +50,15 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    if (_post.mediaType == MediaType.none) {
+      return _buildTextPostLayout(context);
+    } else {
+      return _buildMediaPostLayout(context);
+    }
+  }
 
+  Widget _buildTextPostLayout(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -61,187 +68,202 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
-          _post.authorName,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: const Text('Gönderi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: _post.authorType == 'team' ? theme.colorScheme.primary : Colors.grey,
+                  backgroundImage: _post.authorAvatar != null ? NetworkImage(_post.authorAvatar!) : null,
+                  child: _post.authorAvatar == null
+                      ? Icon(_post.authorType == 'team' ? Icons.shield : Icons.person, color: Colors.white)
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _post.authorName,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    if (_post.authorType == 'team')
+                      Text('@${_post.authorName.replaceAll(' ', '').toLowerCase()}', style: TextStyle(color: Colors.grey[500], fontSize: 14)),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            
+            // Content
+            Text(
+              _post.content,
+              style: const TextStyle(color: Colors.white, fontSize: 22, height: 1.3),
+            ),
+            const SizedBox(height: 16),
+            
+            // Date
+            Text(
+              _post.timeAgo,
+              style: TextStyle(color: Colors.grey[500], fontSize: 15),
+            ),
+            const SizedBox(height: 16),
+            const Divider(color: Colors.white24),
+            
+            // Stats
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                children: [
+                  Text('${_post.likesCount}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text(' Beğeni', style: TextStyle(color: Colors.grey[500], fontSize: 16)),
+                  const SizedBox(width: 16),
+                  Text('${_post.commentsCount}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text(' Yorum', style: TextStyle(color: Colors.grey[500], fontSize: 16)),
+                ],
+              ),
+            ),
+            const Divider(color: Colors.white24),
+            
+            // Actions
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                IconButton(
+                  icon: Icon(_post.isLiked ? Icons.favorite : Icons.favorite_border, color: _post.isLiked ? Colors.red : Colors.grey),
+                  onPressed: _toggleLike,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.chat_bubble_outline, color: Colors.grey),
+                  onPressed: () {},
+                ),
+                IconButton(
+                  icon: const Icon(Icons.share_outlined, color: Colors.grey),
+                  onPressed: () {},
+                ),
+              ],
+            ),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildMediaPostLayout(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(_post.authorName.toUpperCase(), style: const TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Author Header
+            // Header
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 children: [
                   CircleAvatar(
-                    radius: 24,
-                    backgroundColor: _post.authorType == 'team'
-                        ? theme.colorScheme.primary
-                        : Colors.grey,
-                    backgroundImage: _post.authorAvatar != null
-                        ? NetworkImage(_post.authorAvatar!)
-                        : null,
+                    radius: 16,
+                    backgroundColor: _post.authorType == 'team' ? theme.colorScheme.primary : Colors.grey,
+                    backgroundImage: _post.authorAvatar != null ? NetworkImage(_post.authorAvatar!) : null,
                     child: _post.authorAvatar == null
-                        ? Icon(
-                            _post.authorType == 'team' ? Icons.shield : Icons.person,
-                            color: Colors.white,
-                          )
+                        ? Icon(_post.authorType == 'team' ? Icons.shield : Icons.person, size: 16, color: Colors.white)
                         : null,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                _post.authorName,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            if (_post.authorType == 'team') ...[
-                              const SizedBox(width: 6),
-                              Icon(Icons.verified, size: 18, color: theme.colorScheme.primary),
-                            ],
-                          ],
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _post.timeAgo,
-                          style: TextStyle(color: Colors.grey[500], fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Media (if exists)
-            if (_post.mediaType != MediaType.none && _post.mediaUrl != null)
-              _buildMedia(context),
-
-            // Content Text
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                _post.content,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  height: 1.5,
-                ),
-              ),
-            ),
-
-            // Divider
-            Container(
-              height: 1,
-              color: Colors.grey[800],
-            ),
-
-            // Actions Row
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  // Like Button
-                  GestureDetector(
-                    onTap: _toggleLike,
-                    child: Row(
-                      children: [
-                        Icon(
-                          _post.isLiked ? Icons.favorite : Icons.favorite_border,
-                          color: _post.isLiked ? Colors.red : Colors.white70,
-                          size: 28,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${_post.likesCount}',
-                          style: TextStyle(
-                            color: _post.isLiked ? Colors.red : Colors.white70,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 24),
-                  // Comment Button
-                  GestureDetector(
-                    onTap: () {
-                      // TODO: Open comments
-                    },
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.chat_bubble_outline,
-                          color: Colors.white70,
-                          size: 26,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${_post.commentsCount}',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
+                  const SizedBox(width: 10),
+                  Text(
+                    _post.authorName,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                   const Spacer(),
-                  // Share Button
-                  IconButton(
-                    icon: const Icon(Icons.share_outlined, color: Colors.white70),
-                    onPressed: () {
-                      // TODO: Share post
-                    },
-                  ),
+                  const Icon(Icons.more_vert, color: Colors.white),
                 ],
               ),
             ),
 
-            // Challenge Button for Team Posts
-            if (_post.authorType == 'team')
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      // TODO: Challenge team
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    icon: const Icon(Icons.sports_mma),
-                    label: const Text(
-                      'Meydan Oku',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            // Media
+            GestureDetector(
+              onDoubleTap: _toggleLike,
+              child: _buildMedia(context),
+            ),
+
+            // Actions
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: _toggleLike,
+                    child: Icon(
+                      _post.isLiked ? Icons.favorite : Icons.favorite_border,
+                      color: _post.isLiked ? Colors.red : Colors.white,
+                      size: 28,
                     ),
                   ),
+                  const SizedBox(width: 16),
+                  const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 26),
+                  const SizedBox(width: 16),
+                  const Icon(Icons.send, color: Colors.white, size: 26),
+                  const Spacer(),
+                  const Icon(Icons.bookmark_border, color: Colors.white, size: 28),
+                ],
+              ),
+            ),
+
+            // Likes
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                '${_post.likesCount} beğenme',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+            ),
+
+            // Caption
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: RichText(
+                text: TextSpan(
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  children: [
+                    TextSpan(
+                      text: '${_post.authorName} ',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    TextSpan(text: _post.content),
+                  ],
                 ),
               ),
+            ),
 
-            const SizedBox(height: 32),
+            // Time
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              child: Text(
+                _post.timeAgo,
+                style: TextStyle(color: Colors.grey[500], fontSize: 12),
+              ),
+            ),
+            
+            const SizedBox(height: 24),
           ],
         ),
       ),
