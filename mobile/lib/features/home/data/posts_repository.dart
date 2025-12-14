@@ -17,58 +17,147 @@ class PostsRepository {
         if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
       };
 
-  // Get feed posts
+  // Get feed posts - directly from Supabase (bypass backend if not running)
   Future<List<Post>> getFeed({int limit = 20, int offset = 0}) async {
     try {
-      final response = await _dio.get(
-        '/posts/feed',
-        queryParameters: {'limit': limit, 'offset': offset},
-      );
+      print('Fetching feed from Supabase...');
+      
+      // Simple query without joins
+      final response = await _supabase
+          .from('posts')
+          .select('*')
+          .order('created_at', ascending: false)
+          .range(offset, offset + limit - 1);
 
-      final data = response.data['data'] as List;
+      print('Feed response: ${response.length} posts');
+
       final posts = <Post>[];
       
-      for (final json in data) {
+      for (final json in response as List) {
         try {
-          posts.add(Post.fromJson(json));
+          final authorType = json['author_type'] as String?;
+          final authorId = json['author_id'] as String?;
+          String? authorName;
+          String? authorAvatar;
+          
+          // Fetch author info separately
+          if (authorType == 'user' && authorId != null) {
+            final profile = await _supabase
+                .from('profiles')
+                .select('full_name, avatar_url')
+                .eq('id', authorId)
+                .maybeSingle();
+            authorName = profile?['full_name'];
+            authorAvatar = profile?['avatar_url'];
+          } else if (authorType == 'team' && authorId != null) {
+            final team = await _supabase
+                .from('teams')
+                .select('name, logo_url')
+                .eq('id', authorId)
+                .maybeSingle();
+            authorName = team?['name'];
+            authorAvatar = team?['logo_url'];
+          }
+          
+          final postData = <String, dynamic>{
+            ...Map<String, dynamic>.from(json as Map),
+            'author_name': authorName ?? 'Anonim',
+            'author_avatar': authorAvatar,
+          };
+          
+          posts.add(Post.fromJson(postData));
         } catch (e) {
           print('Error parsing post: $e');
           print('Post data: $json');
         }
       }
       
+      print('Parsed ${posts.length} posts successfully');
       return posts;
     } catch (e) {
-      throw Exception('Feed yüklenemedi: $e');
+      print('Supabase feed error: $e');
+      return [];
     }
   }
 
-  // Get posts by specific user
+
+  // Get posts by specific user - directly from Supabase
   Future<List<Post>> getUserPosts(String userId, {String type = 'all', int limit = 20, int offset = 0}) async {
     try {
-      final response = await _dio.get(
-        '/posts/user/$userId',
-        queryParameters: {'type': type, 'limit': limit, 'offset': offset},
-      );
+      print('Fetching user posts: userId=$userId, type=$type');
+      
+      // Simple query without joins
+      var query = _supabase
+          .from('posts')
+          .select('*')
+          .eq('author_id', userId);
+      
+      // Filter by type if specified
+      if (type == 'media') {
+        query = query.or('media_type.eq.image,media_type.eq.video');
+      } else if (type == 'text') {
+        query = query.or('media_type.is.null,media_type.eq.none');
+      } else if (type == 'user') {
+        query = query.eq('author_type', 'user');
+      } else if (type == 'team') {
+        query = query.eq('author_type', 'team');
+      }
+      
+      final response = await query
+          .order('created_at', ascending: false)
+          .range(offset, offset + limit - 1);
 
-      final data = response.data['data'] as List;
+      print('User posts response: ${response.length} posts');
+
       final posts = <Post>[];
       
-      for (final json in data) {
+      for (final json in response as List) {
         try {
-          posts.add(Post.fromJson(json));
+          final authorType = json['author_type'] as String?;
+          final authorId = json['author_id'] as String?;
+          String? authorName;
+          String? authorAvatar;
+          
+          // Fetch author info
+          if (authorType == 'user' && authorId != null) {
+            final profile = await _supabase
+                .from('profiles')
+                .select('full_name, avatar_url')
+                .eq('id', authorId)
+                .maybeSingle();
+            authorName = profile?['full_name'];
+            authorAvatar = profile?['avatar_url'];
+          } else if (authorType == 'team' && authorId != null) {
+            final team = await _supabase
+                .from('teams')
+                .select('name, logo_url')
+                .eq('id', authorId)
+                .maybeSingle();
+            authorName = team?['name'];
+            authorAvatar = team?['logo_url'];
+          }
+          
+          final postData = <String, dynamic>{
+            ...Map<String, dynamic>.from(json as Map),
+            'author_name': authorName ?? 'Anonim',
+            'author_avatar': authorAvatar,
+          };
+          
+          posts.add(Post.fromJson(postData));
         } catch (e) {
           print('Error parsing user post: $e');
         }
       }
       
+      print('Parsed ${posts.length} user posts');
       return posts;
     } catch (e) {
-      throw Exception('Kullanıcı postları yüklenemedi: $e');
+      print('Supabase user posts error: $e');
+      return [];
     }
   }
 
-  // Create post (text only for now)
+  // Create post - directly to Supabase
   Future<Post> createPost({
     required String content,
     MediaType mediaType = MediaType.none,
@@ -78,46 +167,87 @@ class PostsRepository {
     String? contextId,
   }) async {
     try {
-      print('Creating post with contextType: $contextType, contextId: $contextId');
-      print('Auth token present: ${_accessToken != null}');
-      
-      final response = await _dio.post(
-        '/posts',
-        data: {
-          'content': content,
-          'mediaType': mediaType.name,
-          if (mediaUrl != null) 'mediaUrl': mediaUrl,
-          if (mediaThumbnailUrl != null) 'mediaThumbnailUrl': mediaThumbnailUrl,
-        },
-        options: Options(
-          headers: {
-            ..._authHeaders,
-            if (contextType != null) 'x-context-type': contextType,
-            if (contextId != null) 'x-context-id': contextId,
-          },
-        ),
-      );
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) {
+        throw Exception('Kullanıcı oturumu bulunamadı');
+      }
 
-      print('Post created successfully: ${response.data}');
-      return Post.fromJson(response.data['data']);
-    } on DioException catch (e) {
-      print('DioException: ${e.response?.statusCode} - ${e.response?.data}');
-      throw Exception('Post oluşturulamadı: ${e.response?.data ?? e.message}');
+      // Determine author type and id
+      final authorType = contextType ?? 'user';
+      final authorId = contextId ?? userId;
+
+      print('Creating post: authorType=$authorType, authorId=$authorId');
+
+      final postData = {
+        'author_type': authorType,
+        'author_id': authorId,
+        'content': content,
+        'media_type': mediaType == MediaType.none ? 'none' : mediaType.name,
+        if (mediaUrl != null) 'media_url': mediaUrl,
+        if (mediaThumbnailUrl != null) 'media_thumbnail_url': mediaThumbnailUrl,
+      };
+
+      final response = await _supabase
+          .from('posts')
+          .insert(postData)
+          .select()
+          .single();
+
+      print('Post created successfully: $response');
+
+      // Get user profile for author info
+      final profile = await _supabase
+          .from('profiles')
+          .select('full_name, avatar_url')
+          .eq('id', authorId)
+          .maybeSingle();
+
+      final result = <String, dynamic>{
+        ...Map<String, dynamic>.from(response),
+        'author_name': profile?['full_name'] ?? 'Anonim',
+        'author_avatar': profile?['avatar_url'],
+      };
+
+      return Post.fromJson(result);
     } catch (e) {
-      print('General error: $e');
+      print('Create post error: $e');
       throw Exception('Post oluşturulamadı: $e');
     }
   }
 
-  // Toggle like
+  // Toggle like - directly to Supabase
   Future<bool> toggleLike(String postId) async {
     try {
-      final response = await _dio.post(
-        '/posts/$postId/like',
-        options: Options(headers: _authHeaders),
-      );
-      return response.data['liked'] as bool;
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) {
+        throw Exception('Kullanıcı oturumu bulunamadı');
+      }
+
+      // Check if already liked
+      final existing = await _supabase
+          .from('post_likes')
+          .select()
+          .eq('post_id', postId)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (existing != null) {
+        // Unlike - delete the like
+        await _supabase
+            .from('post_likes')
+            .delete()
+            .eq('post_id', postId)
+            .eq('user_id', userId);
+        return false;
+      } else {
+        // Like - insert new like
+        await _supabase
+            .from('post_likes')
+            .insert({'post_id': postId, 'user_id': userId});
+        return true;
+      }
     } catch (e) {
+      print('Toggle like error: $e');
       throw Exception('Like işlemi başarısız: $e');
     }
   }

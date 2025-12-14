@@ -192,7 +192,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
         currentIndex: _calculateSelectedIndexTeam(context),
         onTap: (int idx) => _onTeamItemTapped(idx, context),
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.shield), label: 'Takım'),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Takım'),
           BottomNavigationBarItem(icon: Icon(Icons.sports_soccer), label: 'Maçlar'),
           BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Kadro'),
           BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Sohbet'),

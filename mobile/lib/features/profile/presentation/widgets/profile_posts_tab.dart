@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/models/post.dart';
-import '../../../../core/widgets/video_player_widget.dart';
 import '../../../home/data/posts_repository.dart';
+import '../../../home/presentation/screens/post_detail_screen.dart';
 
 class ProfilePostsTab extends StatefulWidget {
   final String userId;
@@ -160,7 +160,7 @@ class _ProfilePostsTabState extends State<ProfilePostsTab> with SingleTickerProv
       itemBuilder: (context, index) {
         final post = _mediaPosts[index];
         return GestureDetector(
-          onTap: () => _openMediaViewer(post),
+          onTap: () => _openPostDetail(post),
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -203,31 +203,13 @@ class _ProfilePostsTabState extends State<ProfilePostsTab> with SingleTickerProv
     );
   }
 
-  void _openMediaViewer(Post post) {
-    if (post.mediaType == MediaType.video) {
-      VideoPlayerDialog.show(context, post.mediaUrl!, thumbnailUrl: post.mediaThumbnailUrl);
-    } else if (post.mediaType == MediaType.image) {
-      // Full screen image viewer
-      showDialog(
-        context: context,
-        builder: (context) => Scaffold(
-          backgroundColor: Colors.black,
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            leading: IconButton(
-              icon: const Icon(Icons.close, color: Colors.white),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ),
-          body: Center(
-            child: InteractiveViewer(
-              child: Image.network(post.mediaUrl!),
-            ),
-          ),
-        ),
-      );
-    }
+  void _openPostDetail(Post post) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PostDetailScreen(post: post),
+      ),
+    );
   }
 
   Widget _buildTextList() {
@@ -257,39 +239,42 @@ class _ProfilePostsTabState extends State<ProfilePostsTab> with SingleTickerProv
       separatorBuilder: (_, __) => Divider(color: Colors.grey[800], height: 1),
       itemBuilder: (context, index) {
         final post = _textPosts[index];
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                post.content,
-                style: const TextStyle(color: Colors.white, fontSize: 15),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Text(
-                    post.timeAgo,
-                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
-                  ),
-                  const SizedBox(width: 16),
-                  Icon(Icons.favorite, size: 14, color: Colors.grey[500]),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${post.likesCount}',
-                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
-                  ),
-                  const SizedBox(width: 16),
-                  Icon(Icons.chat_bubble_outline, size: 14, color: Colors.grey[500]),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${post.commentsCount}',
-                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
-                  ),
-                ],
-              ),
-            ],
+        return GestureDetector(
+          onTap: () => _openPostDetail(post),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  post.content,
+                  style: const TextStyle(color: Colors.white, fontSize: 15),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Text(
+                      post.timeAgo,
+                      style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                    ),
+                    const SizedBox(width: 16),
+                    Icon(Icons.favorite, size: 14, color: Colors.grey[500]),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${post.likesCount}',
+                      style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                    ),
+                    const SizedBox(width: 16),
+                    Icon(Icons.chat_bubble_outline, size: 14, color: Colors.grey[500]),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${post.commentsCount}',
+                      style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         );
       },

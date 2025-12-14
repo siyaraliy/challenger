@@ -26,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadPosts() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _error = null;
@@ -33,11 +34,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final posts = await _postsRepo.getFeed();
+      if (!mounted) return;
       setState(() {
         _posts = posts;
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _isLoading = false;
