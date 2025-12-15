@@ -22,6 +22,8 @@ import '../../features/team/presentation/screens/team_squad_screen.dart';
 import '../../features/team/presentation/screens/team_chat_screen.dart';
 import '../../features/team/presentation/screens/team_settings_screen.dart';
 import '../../features/team/presentation/screens/team_profile_screen.dart';
+import '../../features/team/presentation/screens/invite_player_screen.dart';
+import '../../features/team/presentation/screens/join_team_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -66,6 +68,30 @@ class AppRouter {
       GoRoute(
         path: '/create-post',
         builder: (context, state) => const CreatePostScreen(),
+      ),
+      // Invite Player (outside shell for fullscreen)
+      GoRoute(
+        path: '/invite-player',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return InvitePlayerScreen(
+            teamId: extra?['teamId'] ?? '',
+            teamName: extra?['teamName'] ?? 'Takım',
+          );
+        },
+      ),
+      // Join Team (outside shell for fullscreen)
+      GoRoute(
+        path: '/join-team',
+        builder: (context, state) {
+          final code = state.uri.queryParameters['code'];
+          return JoinTeamScreen(initialCode: code);
+        },
+      ),
+      // Create Team (outside shell for fullscreen)
+      GoRoute(
+        path: '/create-team',
+        builder: (context, state) => const CreateTeamScreen(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

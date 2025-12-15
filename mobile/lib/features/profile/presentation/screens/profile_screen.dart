@@ -56,18 +56,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (userId == null) return;
 
       final teamRepo = getIt<TeamRepository>();
-      final team = await teamRepo.getMyTeam(userId);
+      
+      // Get all teams where user is a member (includes captain)
+      final teams = await teamRepo.getMyTeams(userId);
 
-      if (team != null && mounted) {
-        // Switch to team mode and navigate
-        final modeCubit = context.read<ModeCubit>();
-        await modeCubit.switchToTeam(team.id, team.name);
-        if (mounted) {
-          context.go('/team-home');
-        }
-      } else if (mounted) {
-        context.push('/create-team');
-      }
+      if (!mounted) return;
+
+      // Always show dialog - whether user has teams or not
+      _showTeamSelectionDialog(teams);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -75,6 +71,123 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       }
     }
+  }
+
+  void _showTeamSelectionDialog(List<dynamic> teams) {
+    final theme = Theme.of(context);
+    
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Takımlarım'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Team list
+              if (teams.isNotEmpty) ...[
+                ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: teams.length,
+                  itemBuilder: (context, index) {
+                    final team = teams[index];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3)),
+                      ),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.2),
+                          backgroundImage: team.logoUrl != null ? NetworkImage(team.logoUrl!) : null,
+                          child: team.logoUrl == null
+                              ? Icon(Icons.shield, color: theme.colorScheme.primary)
+                              : null,
+                        ),
+                        title: Text(team.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: const Text('Takıma geç', style: TextStyle(fontSize: 12)),
+                        trailing: Icon(Icons.arrow_forward_ios, size: 16, color: theme.colorScheme.primary),
+                        onTap: () async {
+                          Navigator.pop(dialogContext);
+                          final modeCubit = this.context.read<ModeCubit>();
+                          await modeCubit.switchToTeam(team.id, team.name);
+                          if (mounted) {
+                            this.context.go('/team-home');
+                          }
+                        },
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                const Divider(),
+                const SizedBox(height: 8),
+              ] else ...[
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      Icon(Icons.group_off, size: 48, color: Colors.grey[600]),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Henüz bir takıma üye değilsiniz',
+                        style: TextStyle(color: Colors.grey[500]),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+              
+              // Action buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(dialogContext);
+                        context.push('/join-team');
+                      },
+                      icon: const Icon(Icons.link, size: 18),
+                      label: const Text('Takıma Katıl'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(dialogContext);
+                        context.push('/create-team');
+                      },
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Takım Oluştur'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Kapat'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _pickImage() async {

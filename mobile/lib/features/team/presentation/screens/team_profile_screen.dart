@@ -32,12 +32,13 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> with SingleTicker
   bool _isLoading = true;
   int _totalPoints = 0;
   int _matchesPlayed = 0;
+  String? _lastTeamId; // Track last loaded team
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadTeamData();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadDataIfNeeded());
 
     // Listen for new posts
     _postSubscription = _postsRepo.onPostCreated.listen((_) {
@@ -52,6 +53,14 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> with SingleTicker
     _postSubscription?.cancel();
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _loadDataIfNeeded() {
+    final modeState = context.read<ModeCubit>().state;
+    if (modeState.isTeamMode && modeState.teamId != _lastTeamId) {
+      _lastTeamId = modeState.teamId;
+      _loadTeamData();
+    }
   }
 
   Future<void> _loadTeamData() async {
@@ -91,7 +100,14 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> with SingleTicker
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return BlocBuilder<ModeCubit, AppModeState>(
+    return BlocConsumer<ModeCubit, AppModeState>(
+      listener: (context, modeState) {
+        // When team changes, reload data
+        if (modeState.isTeamMode && modeState.teamId != _lastTeamId) {
+          _lastTeamId = modeState.teamId;
+          _loadTeamData();
+        }
+      },
       builder: (context, modeState) {
         return Scaffold(
           appBar: AppBar(

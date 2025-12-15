@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class DiscoverScreen extends StatefulWidget {
   const DiscoverScreen({super.key});
@@ -190,9 +191,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Takım davetiyeleri yakında...')),
-            );
+            context.push('/join-team');
           },
           child: Padding(
             padding: const EdgeInsets.all(16),

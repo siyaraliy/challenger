@@ -164,4 +164,33 @@ class TeamRepository {
       throw Exception('Üye çıkarılamadı: ${e.toString()}');
     }
   }
+
+  /// Get all teams where user is a member (including as captain)
+  Future<List<Team>> getMyTeams(String userId) async {
+    try {
+      // Get team IDs where user is a member
+      final membershipResponse = await _supabase
+          .from('team_members')
+          .select('team_id')
+          .eq('user_id', userId);
+
+      final teamIds = (membershipResponse as List)
+          .map((m) => m['team_id'] as String)
+          .toList();
+
+      if (teamIds.isEmpty) return [];
+
+      // Get team details
+      final teamsResponse = await _supabase
+          .from('teams')
+          .select()
+          .inFilter('id', teamIds);
+
+      return (teamsResponse as List)
+          .map((json) => Team.fromJson(json))
+          .toList();
+    } catch (e) {
+      throw Exception('Takımlar getirilemedi: ${e.toString()}');
+    }
+  }
 }

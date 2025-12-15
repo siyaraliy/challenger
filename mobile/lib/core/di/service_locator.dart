@@ -10,6 +10,7 @@ import '../../features/profile/data/repositories/profile_repository.dart';
 import '../../features/profile/presentation/bloc/profile_bloc.dart';
 import '../../features/team/data/repositories/team_repository.dart';
 import '../../features/team/data/repositories/challenge_repository.dart';
+import '../../features/team/data/repositories/invitation_repository.dart';
 import '../../features/home/data/posts_repository.dart';
 
 final getIt = GetIt.instance;
@@ -50,6 +51,11 @@ Future<void> init() async {
     // Challenge Repository
     getIt.registerLazySingleton<ChallengeRepository>(
       () => ChallengeRepository(supabaseClient),
+    );
+    
+    // Invitation Repository
+    getIt.registerLazySingleton<InvitationRepository>(
+      () => InvitationRepository(supabaseClient),
     );
     
     // Blocs (Supabase-dependent)

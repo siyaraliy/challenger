@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/cubit/mode_cubit.dart';
 import '../../../../core/widgets/mode_switcher_button.dart';
 import '../../../../core/widgets/post_card.dart';
 import '../../../../core/models/post.dart';
@@ -20,11 +21,20 @@ class _TeamHomeScreenState extends State<TeamHomeScreen> {
   List<Post> _posts = [];
   bool _isLoading = true;
   String? _error;
+  String? _lastTeamId; // Track last loaded team
 
   @override
   void initState() {
     super.initState();
-    _loadPosts();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadDataIfNeeded());
+  }
+
+  void _loadDataIfNeeded() {
+    final modeState = context.read<ModeCubit>().state;
+    if (modeState.isTeamMode && modeState.teamId != _lastTeamId) {
+      _lastTeamId = modeState.teamId;
+      _loadPosts();
+    }
   }
 
   Future<void> _loadPosts() async {
@@ -72,24 +82,33 @@ class _TeamHomeScreenState extends State<TeamHomeScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Takım Ana Sayfa'),
-        centerTitle: true,
-        actions: const [
-          ModeSwitcherButton(),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _loadPosts,
-        child: _buildBody(theme),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/create-post'),
-        icon: const Icon(Icons.add),
-        label: const Text('Paylaş'),
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: Colors.black,
+    return BlocListener<ModeCubit, dynamic>(
+      listener: (context, state) {
+        // When team changes, reload posts
+        if (state.isTeamMode && state.teamId != _lastTeamId) {
+          _lastTeamId = state.teamId;
+          _loadPosts();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Takım Ana Sayfa'),
+          centerTitle: true,
+          actions: const [
+            ModeSwitcherButton(),
+          ],
+        ),
+        body: RefreshIndicator(
+          onRefresh: _loadPosts,
+          child: _buildBody(theme),
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () => context.push('/create-post'),
+          icon: const Icon(Icons.add),
+          label: const Text('Paylaş'),
+          backgroundColor: theme.colorScheme.primary,
+          foregroundColor: Colors.black,
+        ),
       ),
     );
   }

@@ -28,6 +28,7 @@ class _TeamMatchesScreenState extends State<TeamMatchesScreen> with SingleTicker
   bool _isLoadingOutgoing = true;
   bool _isLoadingOpen = true;
   String? _teamId;
+  String? _lastLoadedTeamId; // Track which team data was loaded for
 
   @override
   void initState() {
@@ -46,7 +47,12 @@ class _TeamMatchesScreenState extends State<TeamMatchesScreen> with SingleTicker
         _teamId = modeState.teamId;
       }
     }
-    _loadChallenges();
+    
+    // Only reload if teamId changed
+    if (_teamId != _lastLoadedTeamId) {
+      _lastLoadedTeamId = _teamId;
+      _loadChallenges();
+    }
   }
 
   @override
@@ -247,7 +253,18 @@ class _TeamMatchesScreenState extends State<TeamMatchesScreen> with SingleTicker
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
+    return BlocListener<ModeCubit, dynamic>(
+      listener: (context, state) {
+        // When mode changes, update teamId and reload
+        if (state.isTeamMode && state.teamId != _teamId) {
+          setState(() {
+            _teamId = state.teamId;
+            _lastLoadedTeamId = null; // Force reload
+          });
+          _loadChallenges();
+        }
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Maçlar'),
         centerTitle: true,
@@ -325,6 +342,7 @@ class _TeamMatchesScreenState extends State<TeamMatchesScreen> with SingleTicker
               label: const Text('Meydan Oku'),
             )
           : null,
+      ),
     );
   }
 
