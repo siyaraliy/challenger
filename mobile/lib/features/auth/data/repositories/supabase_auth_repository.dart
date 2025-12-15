@@ -11,7 +11,12 @@ class SupabaseAuthRepository implements AuthRepository {
   final FlutterSecureStorage _storage;
 
   SupabaseAuthRepository(this._supabase)
-      : _dio = Dio(BaseOptions(baseUrl: ApiConfig.baseUrl)),
+      : _dio = Dio(BaseOptions(
+          baseUrl: ApiConfig.baseUrl,
+          connectTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+          sendTimeout: const Duration(seconds: 10),
+        )),
         _storage = const FlutterSecureStorage();
 
   @override
@@ -171,6 +176,14 @@ class SupabaseAuthRepository implements AuthRepository {
 
       return TeamAuthResult(team: team, teamToken: teamToken);
     } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout) {
+        throw Exception('Backend sunucusuna bağlanılamadı. Lütfen backend\'in çalıştığından emin olun.');
+      }
+      if (e.type == DioExceptionType.connectionError) {
+        throw Exception('Bağlantı hatası. Backend sunucusu çalışıyor mu?');
+      }
       if (e.response?.statusCode == 401) {
         throw Exception('Geçersiz email veya şifre');
       }

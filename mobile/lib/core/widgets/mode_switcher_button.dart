@@ -68,13 +68,21 @@ class ModeSwitcherButton extends StatelessWidget {
       }
     } else {
       // Switch to user mode
-      final authRepo = getIt<SupabaseAuthRepository>();
-      await authRepo.teamLogout();
+      final router = GoRouter.of(context);
+      
+      try {
+        final authRepo = getIt<SupabaseAuthRepository>();
+        await authRepo.teamLogout();
+      } catch (e) {
+        // Continue even if logout API fails
+        print('Team logout error (continuing anyway): $e');
+      }
       
       modeCubit.switchToUser();
-      if (context.mounted) {
-        context.go('/home');
-      }
+      
+      // Small delay to ensure state is updated
+      await Future.delayed(const Duration(milliseconds: 100));
+      router.go('/home');
     }
   }
 
