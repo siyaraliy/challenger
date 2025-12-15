@@ -8,6 +8,7 @@ import { StaticDataModule } from './static-data/static-data.module';
 import { TeamAuthModule } from './auth/team-auth.module';
 import { PostsModule } from './posts/posts.module';
 import { InvitationsModule } from './invitations/invitations.module';
+import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { Position, MatchType, ReportReason } from './static-data/entities';
 
 @Module({
@@ -25,6 +26,7 @@ import { Position, MatchType, ReportReason } from './static-data/entities';
     TeamAuthModule,
     PostsModule,
     InvitationsModule,
+    LeaderboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

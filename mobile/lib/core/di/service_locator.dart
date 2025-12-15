@@ -12,6 +12,8 @@ import '../../features/team/data/repositories/team_repository.dart';
 import '../../features/team/data/repositories/challenge_repository.dart';
 import '../../features/team/data/repositories/invitation_repository.dart';
 import '../../features/home/data/posts_repository.dart';
+import '../../features/ranking/data/leaderboard_repository.dart';
+import '../../features/ranking/presentation/bloc/leaderboard_bloc.dart';
 
 final getIt = GetIt.instance;
 
@@ -58,8 +60,14 @@ Future<void> init() async {
       () => InvitationRepository(supabaseClient),
     );
     
+    // Leaderboard Repository
+    getIt.registerLazySingleton<LeaderboardRepository>(
+      () => LeaderboardRepository(supabaseClient),
+    );
+    
     // Blocs (Supabase-dependent)
     getIt.registerFactory(() => ProfileBloc(getIt<ProfileRepository>()));
+    getIt.registerFactory(() => LeaderboardBloc(getIt<LeaderboardRepository>()));
   } else {
     getIt.registerLazySingleton<AuthRepository>(() => MockAuthRepository());
   }

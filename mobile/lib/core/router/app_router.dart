@@ -6,6 +6,7 @@ import '../cubit/mode_cubit.dart';
 import '../models/app_mode_state.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/profile/presentation/bloc/profile_bloc.dart';
+import '../../features/ranking/presentation/bloc/leaderboard_bloc.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/home/presentation/screens/create_post_screen.dart';
@@ -119,7 +120,10 @@ class AppRouter {
             routes: [
               GoRoute(
                 path: '/ranking',
-                builder: (context, state) => const RankingScreen(),
+                builder: (context, state) => BlocProvider(
+                  create: (context) => getIt<LeaderboardBloc>()..add(const LoadLeaderboard()),
+                  child: const RankingScreen(),
+                ),
               ),
             ],
           ),
@@ -143,7 +147,7 @@ class AppRouter {
             ],
           ),
           
-          // TEAM MODE BRANCHES (5-9)
+          // TEAM MODE BRANCHES (5-10)
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -157,6 +161,17 @@ class AppRouter {
               GoRoute(
                 path: '/team-matches',
                 builder: (context, state) => const TeamMatchesScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/team-ranking',
+                builder: (context, state) => BlocProvider(
+                  create: (context) => getIt<LeaderboardBloc>()..add(const LoadLeaderboard()),
+                  child: const RankingScreen(),
+                ),
               ),
             ],
           ),
@@ -246,10 +261,10 @@ class ScaffoldWithNavBar extends StatelessWidget {
         ],
       );
     } else {
-      // Ensure we are showing a team tab (5-9)
-      // Map global index (5-9) to local index (0-4)
+      // Ensure we are showing a team tab (5-10)
+      // Map global index (5-10) to local index (0-5)
       final currentIndex = navigationShell.currentIndex;
-      final effectiveIndex = (currentIndex >= 5 && currentIndex <= 9) ? currentIndex - 5 : 0;
+      final effectiveIndex = (currentIndex >= 5 && currentIndex <= 10) ? currentIndex - 5 : 0;
       
       return BottomNavigationBar(
         currentIndex: effectiveIndex,
@@ -257,6 +272,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Takım'),
           BottomNavigationBarItem(icon: Icon(Icons.sports_soccer), label: 'Maçlar'),
+          BottomNavigationBarItem(icon: Icon(Icons.leaderboard), label: 'Sıralama'),
           BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Kadro'),
           BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Sohbet'),
           BottomNavigationBarItem(icon: Icon(Icons.shield_outlined), label: 'Profil'),

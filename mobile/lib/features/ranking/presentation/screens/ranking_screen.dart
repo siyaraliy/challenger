@@ -1,102 +1,107 @@
 import 'package:flutter/material.dart';
-
-/// Team ranking data model (mock)
-class TeamRankingData {
-  final String id;
-  final String name;
-  final String? logoUrl;
-  final int points;
-  final int matchesPlayed;
-  final int wins;
-  final int losses;
-
-  const TeamRankingData({
-    required this.id,
-    required this.name,
-    this.logoUrl,
-    required this.points,
-    required this.matchesPlayed,
-    required this.wins,
-    required this.losses,
-  });
-}
-
-/// Mock team rankings
-const List<TeamRankingData> mockTeamRankings = [
-  TeamRankingData(
-    id: '1',
-    name: 'Red Dragons FC',
-    points: 450,
-    matchesPlayed: 15,
-    wins: 12,
-    losses: 3,
-  ),
-  TeamRankingData(
-    id: '2',
-    name: 'Blue Sharks',
-    points: 380,
-    matchesPlayed: 14,
-    wins: 10,
-    losses: 4,
-  ),
-  TeamRankingData(
-    id: '3',
-    name: 'Golden Eagles',
-    points: 350,
-    matchesPlayed: 13,
-    wins: 9,
-    losses: 4,
-  ),
-  TeamRankingData(
-    id: '4',
-    name: 'Black Panthers',
-    points: 320,
-    matchesPlayed: 12,
-    wins: 8,
-    losses: 4,
-  ),
-  TeamRankingData(
-    id: '5',
-    name: 'Silver Wolves',
-    points: 290,
-    matchesPlayed: 11,
-    wins: 7,
-    losses: 4,
-  ),
-];
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../bloc/leaderboard_bloc.dart';
+import '../../data/leaderboard_repository.dart';
 
 class RankingScreen extends StatelessWidget {
   const RankingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Sıralama'),
-        centerTitle: true,
-      ),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: mockTeamRankings.length,
-        separatorBuilder: (context, index) => const SizedBox(height: 12),
-        itemBuilder: (context, index) {
-          final team = mockTeamRankings[index];
-          final rank = index + 1;
-
-          return _buildTeamRankCard(context, theme, team, rank);
-        },
-      ),
+    return BlocBuilder<LeaderboardBloc, LeaderboardState>(
+      builder: (context, state) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Sıralama'),
+            centerTitle: true,
+          ),
+          body: _buildBody(context, state),
+        );
+      },
     );
+  }
+
+  Widget _buildBody(BuildContext context, LeaderboardState state) {
+    if (state is LeaderboardLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (state is LeaderboardError) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
+            const SizedBox(height: 16),
+            Text(
+              'Bir hata oluştu',
+              style: TextStyle(color: Colors.grey[400], fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: () {
+                context.read<LeaderboardBloc>().add(const LoadLeaderboard());
+              },
+              child: const Text('Tekrar Dene'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (state is LeaderboardLoaded) {
+      if (state.rankings.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.emoji_events_outlined,
+                  size: 64, color: Colors.grey[600]),
+              const SizedBox(height: 16),
+              Text(
+                'Henüz sıralama yok',
+                style: TextStyle(color: Colors.grey[400], fontSize: 16),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Takımlar maç yaptıkça burada görünecek',
+                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+              ),
+            ],
+          ),
+        );
+      }
+
+      return RefreshIndicator(
+        onRefresh: () async {
+          context.read<LeaderboardBloc>().add(const RefreshLeaderboard());
+        },
+        child: ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemCount: state.rankings.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final team = state.rankings[index];
+            final rank = index + 1;
+            return _buildTeamRankCard(context, team, rank);
+          },
+        ),
+      );
+    }
+
+    // Initial state - trigger load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<LeaderboardBloc>().add(const LoadLeaderboard());
+    });
+    return const Center(child: CircularProgressIndicator());
   }
 
   Widget _buildTeamRankCard(
     BuildContext context,
-    ThemeData theme,
-    TeamRankingData team,
+    TeamRanking team,
     int rank,
   ) {
+    final theme = Theme.of(context);
     Color rankColor;
     if (rank == 1) {
       rankColor = Colors.amber;
@@ -114,7 +119,9 @@ class RankingScreen extends StatelessWidget {
         color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: rank <= 3 ? rankColor.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.1),
+          color: rank <= 3
+              ? rankColor.withValues(alpha: 0.5)
+              : Colors.white.withValues(alpha: 0.1),
           width: rank <= 3 ? 2 : 1,
         ),
       ),
@@ -142,15 +149,23 @@ class RankingScreen extends StatelessWidget {
 
           const SizedBox(width: 16),
 
-          // Team logo placeholder
+          // Team logo
           Container(
             width: 50,
             height: 50,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.grey[800],
+              image: team.logoUrl != null
+                  ? DecorationImage(
+                      image: NetworkImage(team.logoUrl!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
             ),
-            child: const Icon(Icons.shield, color: Colors.white, size: 28),
+            child: team.logoUrl == null
+                ? const Icon(Icons.shield, color: Colors.white, size: 28)
+                : null,
           ),
 
           const SizedBox(width: 16),
@@ -170,7 +185,7 @@ class RankingScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${team.matchesPlayed} Maç • ${team.wins}G ${team.losses}M',
+                  '${team.matchesPlayed} Maç • ${team.memberCount} Üye',
                   style: TextStyle(
                     color: Colors.grey[400],
                     fontSize: 13,
@@ -188,7 +203,7 @@ class RankingScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              '${team.points} P',
+              '${team.totalPoints} P',
               style: const TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.bold,
