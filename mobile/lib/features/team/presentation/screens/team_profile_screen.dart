@@ -19,7 +19,7 @@ class TeamProfileScreen extends StatefulWidget {
   State<TeamProfileScreen> createState() => _TeamProfileScreenState();
 }
 
-class _TeamProfileScreenState extends State<TeamProfileScreen> with SingleTickerProviderStateMixin {
+class _TeamProfileScreenState extends State<TeamProfileScreen> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late TabController _tabController;
   final PostsRepository _postsRepo = getIt<PostsRepository>();
   final TeamRepository _teamRepo = getIt<TeamRepository>();
@@ -33,12 +33,17 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> with SingleTicker
   int _totalPoints = 0;
   int _matchesPlayed = 0;
   String? _lastTeamId; // Track last loaded team
+  bool _isVisible = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadDataIfNeeded());
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _isVisible = true;
+      _loadDataIfNeeded();
+    });
 
     // Listen for new posts
     _postSubscription = _postsRepo.onPostCreated.listen((_) {
@@ -50,9 +55,45 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> with SingleTicker
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _postSubscription?.cancel();
     _tabController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Refresh when app comes back to foreground
+    if (state == AppLifecycleState.resumed && _isVisible) {
+      _refreshPointsOnly();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Called when tab is selected - refresh points
+    if (_isVisible && !_isLoading) {
+      _refreshPointsOnly();
+    }
+  }
+
+  /// Only refresh points, not the entire screen
+  Future<void> _refreshPointsOnly() async {
+    final modeState = context.read<ModeCubit>().state;
+    if (!modeState.isTeamMode || modeState.teamId == null) return;
+    
+    try {
+      final points = await _challengeRepo.getTeamPoints(modeState.teamId!);
+      if (mounted) {
+        setState(() {
+          _totalPoints = points?['total_points'] ?? 0;
+          _matchesPlayed = points?['matches_played'] ?? 0;
+        });
+      }
+    } catch (e) {
+      print('Error refreshing points: $e');
+    }
   }
 
   void _loadDataIfNeeded() {
@@ -60,6 +101,9 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> with SingleTicker
     if (modeState.isTeamMode && modeState.teamId != _lastTeamId) {
       _lastTeamId = modeState.teamId;
       _loadTeamData();
+    } else if (modeState.isTeamMode) {
+      // Same team, just refresh points
+      _refreshPointsOnly();
     }
   }
 

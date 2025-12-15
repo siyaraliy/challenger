@@ -94,8 +94,19 @@ class _TeamHomeScreenState extends State<TeamHomeScreen> {
         appBar: AppBar(
           title: const Text('Takım Ana Sayfa'),
           centerTitle: true,
-          actions: const [
-            ModeSwitcherButton(),
+          actions: [
+            // Notifications icon (first - more user friendly)
+            IconButton(
+              icon: const Icon(Icons.notifications_outlined),
+              tooltip: 'Bildirimler',
+              onPressed: () => context.push('/notifications'),
+            ),
+            // Team Chat icon
+            IconButton(
+              icon: const Icon(Icons.chat_bubble_outline),
+              tooltip: 'Takım Sohbeti',
+              onPressed: () => context.push('/team-chat'),
+            ),
           ],
         ),
         body: RefreshIndicator(

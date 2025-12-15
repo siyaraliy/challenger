@@ -25,6 +25,7 @@ import '../../features/team/presentation/screens/team_settings_screen.dart';
 import '../../features/team/presentation/screens/team_profile_screen.dart';
 import '../../features/team/presentation/screens/invite_player_screen.dart';
 import '../../features/team/presentation/screens/join_team_screen.dart';
+import '../../features/notifications/presentation/screens/notifications_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -94,6 +95,16 @@ class AppRouter {
         path: '/create-team',
         builder: (context, state) => const CreateTeamScreen(),
       ),
+      // Team Chat (outside shell for fullscreen with back button)
+      GoRoute(
+        path: '/team-chat',
+        builder: (context, state) => const TeamChatScreen(),
+      ),
+      // Notifications (outside shell for fullscreen with back button)
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationsScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return ScaffoldWithNavBar(navigationShell: navigationShell);
@@ -147,7 +158,7 @@ class AppRouter {
             ],
           ),
           
-          // TEAM MODE BRANCHES (5-10)
+          // TEAM MODE BRANCHES (5-9)
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -180,14 +191,6 @@ class AppRouter {
               GoRoute(
                 path: '/team-squad',
                 builder: (context, state) => const TeamSquadScreen(),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/team-chat',
-                builder: (context, state) => const TeamChatScreen(),
               ),
             ],
           ),
@@ -261,10 +264,10 @@ class ScaffoldWithNavBar extends StatelessWidget {
         ],
       );
     } else {
-      // Ensure we are showing a team tab (5-10)
-      // Map global index (5-10) to local index (0-5)
+      // Ensure we are showing a team tab (5-9)
+      // Map global index (5-9) to local index (0-4)
       final currentIndex = navigationShell.currentIndex;
-      final effectiveIndex = (currentIndex >= 5 && currentIndex <= 10) ? currentIndex - 5 : 0;
+      final effectiveIndex = (currentIndex >= 5 && currentIndex <= 9) ? currentIndex - 5 : 0;
       
       return BottomNavigationBar(
         currentIndex: effectiveIndex,
@@ -274,7 +277,6 @@ class ScaffoldWithNavBar extends StatelessWidget {
           BottomNavigationBarItem(icon: Icon(Icons.sports_soccer), label: 'Maçlar'),
           BottomNavigationBarItem(icon: Icon(Icons.leaderboard), label: 'Sıralama'),
           BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Kadro'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Sohbet'),
           BottomNavigationBarItem(icon: Icon(Icons.shield_outlined), label: 'Profil'),
         ],
       );
