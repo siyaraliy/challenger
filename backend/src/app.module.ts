@@ -1,30 +1,37 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UsersModule } from './users/users.module';
-import { TeamsModule } from './teams/teams.module';
-import { User } from './users/user.entity';
-import { Team } from './teams/team.entity';
+import { SupabaseModule } from './supabase/supabase.module';
+import { StaticDataModule } from './static-data/static-data.module';
+import { TeamAuthModule } from './auth/team-auth.module';
+import { PostsModule } from './posts/posts.module';
+import { InvitationsModule } from './invitations/invitations.module';
+import { LeaderboardModule } from './leaderboard/leaderboard.module';
+import { ChatModule } from './chat/chat.module';
+import { Position, MatchType, ReportReason } from './static-data/entities';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
+    // SQLite for static data
     TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT || '5432', 10),
-      username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
-      entities: [User, Team],
-      synchronize: true, // Auto-create tables (Dev only)
+      type: 'better-sqlite3',
+      database: 'static.db',
+      entities: [Position, MatchType, ReportReason],
+      synchronize: true, // Auto-create tables
     }),
-    UsersModule,
-    TeamsModule,
+    SupabaseModule,
+    StaticDataModule,
+    TeamAuthModule,
+    PostsModule,
+    InvitationsModule,
+    LeaderboardModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule { }
+
