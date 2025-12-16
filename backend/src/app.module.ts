@@ -9,6 +9,7 @@ import { TeamAuthModule } from './auth/team-auth.module';
 import { PostsModule } from './posts/posts.module';
 import { InvitationsModule } from './invitations/invitations.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
+import { ChatModule } from './chat/chat.module';
 import { Position, MatchType, ReportReason } from './static-data/entities';
 
 @Module({
@@ -27,6 +28,7 @@ import { Position, MatchType, ReportReason } from './static-data/entities';
     PostsModule,
     InvitationsModule,
     LeaderboardModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -12,7 +12,11 @@ import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/home/presentation/screens/create_post_screen.dart';
 import '../../features/discover/presentation/screens/discover_screen.dart';
 import '../../features/ranking/presentation/screens/ranking_screen.dart';
-import '../../features/chat/presentation/screens/chat_screen.dart';
+import '../../features/chat/presentation/screens/conversations_list_screen.dart';
+import '../../features/chat/presentation/screens/chat_room_screen.dart';
+import '../../features/chat/presentation/bloc/chat_list_bloc.dart';
+import '../../features/chat/presentation/bloc/chat_room_bloc.dart';
+import '../../features/chat/data/chat_repository.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/team/presentation/screens/create_team_screen.dart';
@@ -105,6 +109,22 @@ class AppRouter {
         path: '/notifications',
         builder: (context, state) => const NotificationsScreen(),
       ),
+      // Chat Room (individual chat screen)
+      GoRoute(
+        path: '/chat/:roomId',
+        builder: (context, state) {
+          final roomId = state.pathParameters['roomId']!;
+          final extra = state.extra as Map<String, dynamic>?;
+          return BlocProvider(
+            create: (context) => ChatRoomBloc(getIt<ChatRepository>())
+              ..add(LoadChatRoom(roomId)),
+            child: ChatRoomScreen(
+              roomId: roomId,
+              roomName: extra?['roomName'],
+            ),
+          );
+        },
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return ScaffoldWithNavBar(navigationShell: navigationShell);
@@ -142,7 +162,10 @@ class AppRouter {
             routes: [
               GoRoute(
                 path: '/chat',
-                builder: (context, state) => const ChatScreen(),
+                builder: (context, state) => BlocProvider(
+                  create: (context) => getIt<ChatListBloc>()..add(const LoadChatList()),
+                  child: const ConversationsListScreen(),
+                ),
               ),
             ],
           ),
