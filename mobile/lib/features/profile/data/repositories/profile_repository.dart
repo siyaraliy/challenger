@@ -90,4 +90,134 @@ class ProfileRepository {
       throw Exception('Avatar silinemedi: ${e.toString()}');
     }
   }
+
+  /// Follow a user
+  Future<void> followUser(String targetUserId) async {
+    try {
+      final currentUserId = _supabase.auth.currentUser?.id;
+      if (currentUserId == null) throw Exception('Kullanıcı oturumu bulunamadı');
+
+      await _supabase.from('follows').insert({
+        'follower_id': currentUserId,
+        'following_id': targetUserId,
+      });
+    } catch (e) {
+      throw Exception('Takip edilemedi: ${e.toString()}');
+    }
+  }
+
+  /// Unfollow a user
+  Future<void> unfollowUser(String targetUserId) async {
+    try {
+      final currentUserId = _supabase.auth.currentUser?.id;
+      if (currentUserId == null) throw Exception('Kullanıcı oturumu bulunamadı');
+
+      await _supabase
+          .from('follows')
+          .delete()
+          .eq('follower_id', currentUserId)
+          .eq('following_id', targetUserId);
+    } catch (e) {
+      throw Exception('Takipten çıkılamadı: ${e.toString()}');
+    }
+  }
+
+  /// Check if following a user
+  Future<bool> isFollowing(String targetUserId) async {
+    try {
+      final currentUserId = _supabase.auth.currentUser?.id;
+      if (currentUserId == null) return false;
+
+      final response = await _supabase
+          .from('follows')
+          .select()
+          .eq('follower_id', currentUserId)
+          .eq('following_id', targetUserId)
+          .maybeSingle();
+
+      return response != null;
+    } catch (e) {
+      // Fail silently for check
+      return false;
+    }
+  }
+
+  /// Get list of followers for a user
+  Future<List<UserProfile>> getFollowers(String userId) async {
+    try {
+      final response = await _supabase
+          .from('follows')
+          .select('follower_id')
+          .eq('following_id', userId);
+
+      final ids = (response as List)
+          .map((e) => e['follower_id'] as String)
+          .toList();
+      
+      print('Followers fetch: found ${ids.length} IDs for user $userId');
+      
+      if (ids.isEmpty) return [];
+
+      final profilesResponse = await _supabase
+          .from('profiles')
+          .select()
+          .inFilter('id', ids);
+
+      print('Followers fetch: found ${profilesResponse.length} profiles for ${ids.length} IDs');
+
+      return (profilesResponse as List)
+          .map((e) => UserProfile.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw Exception('Takipçiler getirilemedi: ${e.toString()}');
+    }
+  }
+
+  /// Get list of users that a user is following
+  Future<List<UserProfile>> getFollowing(String userId) async {
+    try {
+      final response = await _supabase
+          .from('follows')
+          .select('following_id')
+          .eq('follower_id', userId);
+
+      final ids = (response as List)
+          .map((e) => e['following_id'] as String)
+          .toList();
+      
+      print('Following fetch: found ${ids.length} IDs for user $userId');
+      
+      if (ids.isEmpty) return [];
+
+      final profilesResponse = await _supabase
+          .from('profiles')
+          .select()
+          .inFilter('id', ids);
+
+      print('Following fetch: found ${profilesResponse.length} profiles for ${ids.length} IDs');
+
+      return (profilesResponse as List)
+          .map((e) => UserProfile.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw Exception('Takip edilenler getirilemedi: ${e.toString()}');
+    }
+  }
+
+  /// Search profiles by name
+  Future<List<UserProfile>> searchProfiles(String query) async {
+    try {
+      final response = await _supabase
+          .from('profiles')
+          .select()
+          .ilike('full_name', '%$query%')
+          .limit(20);
+
+      return (response as List)
+          .map((e) => UserProfile.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw Exception('Kullanıcı aranamadı: ${e.toString()}');
+    }
+  }
 }

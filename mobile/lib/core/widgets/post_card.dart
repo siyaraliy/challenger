@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../models/post.dart';
 import 'video_player_widget.dart';
+import 'video_feed_item.dart';
 
 class PostCard extends StatelessWidget {
   final Post post;
   final VoidCallback? onLikeTap;
   final VoidCallback? onCommentTap;
   final VoidCallback? onChallengeTap;
+  final VoidCallback? onShareTap;
   final bool showChallengeButton;
 
   const PostCard({
@@ -15,6 +18,7 @@ class PostCard extends StatelessWidget {
     this.onLikeTap,
     this.onCommentTap,
     this.onChallengeTap,
+    this.onShareTap,
     this.showChallengeButton = true,
   });
 
@@ -43,43 +47,36 @@ class PostCard extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                CircleAvatar(
-                  backgroundColor: post.authorType == 'team' 
-                      ? theme.colorScheme.primary 
-                      : Colors.grey,
-                  backgroundImage: post.authorAvatar != null 
-                      ? NetworkImage(post.authorAvatar!) 
-                      : null,
-                  child: post.authorAvatar == null 
-                      ? Icon(
-                          post.authorType == 'team' ? Icons.shield : Icons.person,
-                          color: Colors.white,
-                        )
-                      : null,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                GestureDetector( // Wrapped the avatar and name/timeAgo section
+                  onTap: () {
+                    if (post.authorType == 'user') {
+                      context.push('/user/${post.authorId}');
+                    } else {
+                      // Handle team profile navigation if needed (e.g. /team-profile-view/:teamId)
+                      // For now, only user profile is requested
+                    }
+                  },
+                  child: Row(
                     children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              post.authorName,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
+                      CircleAvatar(
+                        backgroundColor: post.authorType == 'team' 
+                            ? theme.colorScheme.primary 
+                            : Colors.grey,
+                        backgroundImage: post.authorAvatar != null 
+                            ? NetworkImage(post.authorAvatar!) 
+                            : null,
+                        child: post.authorAvatar == null 
+                            ? Icon(
+                                post.authorType == 'team' ? Icons.shield : Icons.person,
                                 color: Colors.white,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          if (post.authorType == 'team') ...[
-                            const SizedBox(width: 6),
-                            Icon(Icons.verified, size: 16, color: theme.colorScheme.primary),
-                          ],
-                        ],
+                              )
+                            : null,
                       ),
+                      if (post.authorType == 'team') ...[
+                        const SizedBox(width: 6),
+                        Icon(Icons.verified, size: 16, color: theme.colorScheme.primary),
+                      ],
+                      const SizedBox(width: 8),
                       Text(
                         post.timeAgo,
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -120,6 +117,12 @@ class PostCard extends StatelessWidget {
                       icon: Icons.chat_bubble_outline,
                       label: '${post.commentsCount}',
                       onTap: onCommentTap,
+                    ),
+                    const SizedBox(width: 16),
+                    _ActionButton(
+                      icon: Icons.send, // Share icon
+                      label: '', // No label for share usually
+                      onTap: onShareTap,
                     ),
                     const Spacer(),
                     // DEBUG: Always show button for team posts
@@ -199,34 +202,10 @@ class PostCard extends StatelessWidget {
         ),
       );
     } else if (post.mediaType == MediaType.video) {
-      // Video thumbnail with play button - opens fullscreen player on tap
-      return GestureDetector(
-        onTap: () => VideoPlayerDialog.show(
-          context,
-          post.mediaUrl!,
-          thumbnailUrl: post.mediaThumbnailUrl,
-        ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Container(
-              height: 250,
-              width: double.infinity,
-              color: Colors.black,
-              child: post.mediaThumbnailUrl != null
-                  ? Image.network(post.mediaThumbnailUrl!, fit: BoxFit.cover)
-                  : const Icon(Icons.videocam, size: 50, color: Colors.white24),
-            ),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                color: Colors.black54,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.play_arrow, size: 40, color: Colors.white),
-            ),
-          ],
-        ),
+      // Auto-play video feed item
+      return VideoFeedItem(
+        videoUrl: post.mediaUrl!,
+        thumbnailUrl: post.mediaThumbnailUrl,
       );
     }
     return const SizedBox.shrink();

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:video_player/video_player.dart';
 import '../../../core/config/api_config.dart';
 import '../../../core/models/post.dart';
 
@@ -287,31 +288,77 @@ class PostsRepository {
     }
   }
 
-  // Get comments
+  // Get comments - directly from Supabase
   Future<List<Comment>> getComments(String postId, {int limit = 20, int offset = 0}) async {
     try {
-      final response = await _dio.get(
-        '/posts/$postId/comments',
-        queryParameters: {'limit': limit, 'offset': offset},
-      );
+      final response = await _supabase
+          .from('post_comments')
+          .select('id, user_id, content, created_at')
+          .eq('post_id', postId)
+          .order('created_at', ascending: true)
+          .range(offset, offset + limit - 1);
 
-      final data = response.data['data'] as List;
-      return data.map((json) => Comment.fromJson(json)).toList();
+      final comments = <Comment>[];
+      for (final json in response as List) {
+        // Fetch user info
+        final userId = json['user_id'] as String;
+        final profile = await _supabase
+            .from('profiles')
+            .select('full_name, avatar_url')
+            .eq('id', userId)
+            .maybeSingle();
+
+        comments.add(Comment(
+          id: json['id'] as String,
+          userId: userId,
+          userName: profile?['full_name'] ?? 'Anonim',
+          userAvatar: profile?['avatar_url'] as String?,
+          content: json['content'] as String,
+          createdAt: DateTime.parse(json['created_at'] as String),
+        ));
+      }
+      return comments;
     } catch (e) {
+      print('Get comments error: $e');
       throw Exception('Yorumlar yüklenemedi: $e');
     }
   }
 
-  // Add comment
+  // Add comment - directly to Supabase
   Future<Comment> addComment(String postId, String content) async {
     try {
-      final response = await _dio.post(
-        '/posts/$postId/comments',
-        data: {'content': content},
-        options: Options(headers: _authHeaders),
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) {
+        throw Exception('Kullanıcı oturumu bulunamadı');
+      }
+
+      final response = await _supabase
+          .from('post_comments')
+          .insert({
+            'post_id': postId,
+            'user_id': userId,
+            'content': content,
+          })
+          .select()
+          .single();
+
+      // Fetch user info for the new comment
+      final profile = await _supabase
+          .from('profiles')
+          .select('full_name, avatar_url')
+          .eq('id', userId)
+          .maybeSingle();
+
+      return Comment(
+        id: response['id'] as String,
+        userId: userId,
+        userName: profile?['full_name'] ?? 'Anonim',
+        userAvatar: profile?['avatar_url'] as String?,
+        content: response['content'] as String,
+        createdAt: DateTime.parse(response['created_at'] as String),
       );
-      return Comment.fromJson(response.data['data']);
     } catch (e) {
+      print('Add comment error: $e');
       throw Exception('Yorum eklenemedi: $e');
     }
   }
@@ -321,6 +368,26 @@ class PostsRepository {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final extension = file.path.split('.').last.toLowerCase();
     final isVideo = ['mp4', 'mov', 'avi'].contains(extension);
+    
+    // 1. Size Validation (Max 500MB)
+    final sizeInBytes = await file.length();
+    final sizeInMB = sizeInBytes / (1024 * 1024);
+    if (sizeInMB > 500) {
+      throw Exception('Video boyutu 500MB\'dan büyük olamaz.');
+    }
+
+    // 2. Duration Validation (Max 60s)
+    if (isVideo) {
+      final controller = VideoPlayerController.file(file);
+      await controller.initialize();
+      final duration = controller.value.duration;
+      await controller.dispose();
+      
+      if (duration.inSeconds > 60) {
+        throw Exception('Video süresi 60 saniyeden uzun olamaz.');
+      }
+    }
+
     final folder = isVideo ? 'videos' : 'images';
     final path = '$folder/$authorType/$authorId/$timestamp.$extension';
 
@@ -346,6 +413,39 @@ class PostsRepository {
       );
     } catch (e) {
       throw Exception('Post silinemedi: $e');
+    }
+  }
+
+  // Delete comment - directly from Supabase
+  Future<void> deleteComment(String commentId) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) {
+        throw Exception('Kullanıcı oturumu bulunamadı');
+      }
+
+      // Check if user owns the comment
+      final comment = await _supabase
+          .from('post_comments')
+          .select('user_id')
+          .eq('id', commentId)
+          .maybeSingle();
+
+      if (comment == null) {
+        throw Exception('Yorum bulunamadı');
+      }
+
+      if (comment['user_id'] != userId) {
+        throw Exception('Sadece kendi yorumlarınızı silebilirsiniz');
+      }
+
+      await _supabase
+          .from('post_comments')
+          .delete()
+          .eq('id', commentId);
+    } catch (e) {
+      print('Delete comment error: $e');
+      throw Exception('Yorum silinemedi: $e');
     }
   }
 }

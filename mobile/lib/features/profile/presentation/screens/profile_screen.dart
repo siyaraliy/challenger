@@ -377,6 +377,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               // Edit button
+              const SizedBox(width: 8),
               IconButton(
                 onPressed: () => _showEditDialog(profile),
                 icon: Icon(Icons.edit, color: theme.colorScheme.primary),
@@ -384,6 +385,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
         ),
+
+        // Counts Row
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              InkWell(
+                onTap: () => context.push('/followers/$_userId'),
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: _buildCountItem(theme, 'Takipçi', profile.followersCount),
+                ),
+              ),
+              Container(width: 1, height: 24, color: Colors.grey[800]),
+              InkWell(
+                onTap: () => context.push('/following/$_userId'),
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: _buildCountItem(theme, 'Takip Edilen', profile.followingCount),
+                ),
+              ),
+            ],
+          ),
+        ),
+
 
         // Team Section Card
         _buildTeamSection(theme),
@@ -396,6 +425,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Expanded(
             child: ProfilePostsTab(userId: _userId!),
           ),
+      ],
+    );
+  }
+
+  Widget _buildCountItem(ThemeData theme, String label, int count) {
+    return Column(
+      children: [
+        Text(
+          '$count',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(color: Colors.grey[500], fontSize: 12),
+        ),
       ],
     );
   }

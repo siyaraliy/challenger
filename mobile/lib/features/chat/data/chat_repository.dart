@@ -39,40 +39,34 @@ class ChatRepository {
     }
   }
 
-  /// Fallback: Get chats directly from Supabase
+  /// Fallback: Get chats directly from Supabase using RPC
   Future<List<ChatRoom>> _getChatsFromSupabase() async {
     try {
       final userId = _userId;
-      if (userId == null) return [];
+      if (userId == null) {
+        print('DEBUG: _getChatsFromSupabase - userId is null');
+        return [];
+      }
 
-      final response = await _supabase
-          .from('chat_participants')
-          .select('''
-            room_id,
-            status,
-            role,
-            chat_rooms (
-              id,
-              type,
-              name,
-              team_id,
-              last_message_at,
-              created_at
-            )
-          ''')
-          .eq('participant_id', userId)
-          .eq('status', 'approved');
+      print('DEBUG: Calling get_user_chats RPC for userId: $userId');
+
+      // Use SECURITY DEFINER RPC function to bypass RLS
+      final response = await _supabase.rpc('get_user_chats', params: {
+        'p_user_id': userId,
+      });
+
+      print('DEBUG: RPC response: $response');
 
       final rooms = <ChatRoom>[];
       for (final item in response as List) {
-        final room = item['chat_rooms'];
-        if (room == null) continue;
-
+        final roomId = item['room_id'] as String;
+        final roomType = item['room_type'] as String;
+        
         // Get last message
         final lastMessageResponse = await _supabase
             .from('chat_messages')
             .select('content, sender_id, created_at')
-            .eq('room_id', room['id'])
+            .eq('room_id', roomId)
             .order('created_at', ascending: false)
             .limit(1)
             .maybeSingle();
@@ -81,48 +75,60 @@ class ChatRepository {
         final unreadResponse = await _supabase
             .from('chat_messages')
             .select('id')
-            .eq('room_id', room['id'])
+            .eq('room_id', roomId)
             .eq('is_read', false)
             .neq('sender_id', userId);
 
-        // Get other participant for direct chats
-        String? name = room['name'];
+        // Get room name and avatar for direct chats
+        String? name = item['room_name'] as String?;
         String? avatarUrl;
         
-        if (room['type'] == 'direct') {
-          final otherParticipant = await _supabase
+        if (roomType == 'direct') {
+          // Find the other participant
+          final participants = await _supabase
               .from('chat_participants')
-              .select('participant_id')
-              .eq('room_id', room['id'])
-              .neq('participant_id', userId)
-              .maybeSingle();
-
-          if (otherParticipant != null) {
-            final profile = await _supabase
-                .from('profiles')
-                .select('full_name, avatar_url')
-                .eq('id', otherParticipant['participant_id'])
-                .maybeSingle();
-            name = profile?['full_name'];
-            avatarUrl = profile?['avatar_url'];
+              .select('participant_id, participant_type')
+              .eq('room_id', roomId)
+              .neq('participant_id', userId);
+          
+          if ((participants as List).isNotEmpty) {
+            final other = participants.first;
+            if (other['participant_type'] == 'user') {
+              final profile = await _supabase
+                  .from('profiles')
+                  .select('full_name, avatar_url')
+                  .eq('id', other['participant_id'])
+                  .maybeSingle();
+              name = profile?['full_name'];
+              avatarUrl = profile?['avatar_url'];
+            } else {
+              final team = await _supabase
+                  .from('teams')
+                  .select('name, logo_url')
+                  .eq('id', other['participant_id'])
+                  .maybeSingle();
+              name = team?['name'];
+              avatarUrl = team?['logo_url'];
+            }
           }
         }
 
         rooms.add(ChatRoom(
-          id: room['id'],
-          type: room['type'],
+          id: roomId,
+          type: roomType,
           name: name,
           avatarUrl: avatarUrl,
-          teamId: room['team_id'],
+          teamId: item['team_id'] as String?,
           lastMessage: lastMessageResponse?['content'] as String?,
-          lastMessageAt: lastMessageResponse?['created_at'] != null
-              ? DateTime.parse(lastMessageResponse!['created_at'] as String)
+          lastMessageAt: item['last_message_at'] != null
+              ? DateTime.parse(item['last_message_at'] as String)
               : null,
           unreadCount: (unreadResponse as List).length,
-          role: item['role'] ?? 'member',
+          role: item['participant_role'] ?? 'member',
         ));
       }
 
+      print('DEBUG: Returning ${rooms.length} chat rooms');
       return rooms;
     } catch (e) {
       print('Get chats from Supabase error: $e');
@@ -130,26 +136,64 @@ class ChatRepository {
     }
   }
 
-  /// Create or get direct chat with another user
-  Future<String> createDirectChat(String targetUserId) async {
+  /// Create or get direct chat
+  Future<String> createDirectChat(
+    String targetId, {
+    String targetType = 'user',
+    String? contextType,
+    String? contextId,
+  }) async {
     try {
+      final headers = {
+        ..._authHeaders,
+        if (contextType != null) 'x-context-type': contextType,
+        if (contextId != null) 'x-context-id': contextId,
+      };
+
       final response = await _dio.post(
         '/chats/direct',
-        data: {'userId': targetUserId},
-        options: Options(headers: _authHeaders),
+        data: {
+          'targetId': targetId,
+          'targetType': targetType,
+        },
+        options: Options(headers: headers),
       );
 
       return response.data['data']['roomId'] as String;
     } catch (e) {
       print('Create direct chat error: $e');
-      // Fallback to RPC
-      final result = await _supabase.rpc('get_or_create_direct_chat', params: {
-        'user1_id': _userId,
-        'user2_id': targetUserId,
-      });
-      return result as String;
+      // Fallback: Use Supabase RPC 'get_or_create_direct_chat_v2' or logic
+      // Since we don't know if v2 RPC exists, we'll try a manual check/create implementation 
+      // which is safer for client-side fallback
+      
+      return _createDirectChatFallback(targetId, targetType, contextType, contextId);
     }
   }
+
+  Future<String> _createDirectChatFallback(
+    String targetId,
+    String targetType,
+    String? contextType,
+    String? contextId,
+  ) async {
+    // Use the SECURITY DEFINER RPC function which bypasses RLS
+    final userId = _userId;
+    if (userId == null) throw Exception('Kimlik doğrulanamadı');
+
+    try {
+      // Call the RPC function - this bypasses RLS because it's SECURITY DEFINER
+      final response = await _supabase.rpc('get_or_create_direct_chat', params: {
+        'user1_id': userId,
+        'user2_id': targetId,
+      });
+      
+      return response as String;
+    } catch (e) {
+      print('RPC fallback error: $e');
+      throw Exception('Sohbet başlatılamadı: $e');
+    }
+  }
+
 
   /// Get room details
   Future<ChatRoom?> getRoomDetails(String roomId) async {
@@ -294,6 +338,7 @@ class ChatRepository {
           content: msg['content'],
           messageType: msg['message_type'] ?? 'text',
           mediaUrl: msg['media_url'],
+          sharedPostId: msg['shared_post_id'],
           isRead: msg['is_read'] ?? false,
           isOwn: isOwn,
           createdAt: DateTime.parse(msg['created_at']),
@@ -313,6 +358,7 @@ class ChatRepository {
     String content, {
     String messageType = 'text',
     String? mediaUrl,
+    String? sharedPostId,
     String? contextType,
     String? contextId,
   }) async {
@@ -329,6 +375,7 @@ class ChatRepository {
           'content': content,
           'messageType': messageType,
           if (mediaUrl != null) 'mediaUrl': mediaUrl,
+          if (sharedPostId != null) 'sharedPostId': sharedPostId,
         },
         options: Options(headers: headers),
       );
@@ -337,7 +384,15 @@ class ChatRepository {
     } catch (e) {
       print('Send message error: $e');
       // Fallback to direct Supabase insert
-      return _sendMessageToSupabase(roomId, content, messageType: messageType, mediaUrl: mediaUrl);
+      return _sendMessageToSupabase(
+        roomId, 
+        content, 
+        messageType: messageType, 
+        mediaUrl: mediaUrl,
+        sharedPostId: sharedPostId,
+        contextType: contextType,
+        contextId: contextId,
+      );
     }
   }
 
@@ -347,18 +402,26 @@ class ChatRepository {
     String content, {
     String messageType = 'text',
     String? mediaUrl,
+    String? sharedPostId,
+    String? contextType,
+    String? contextId,
   }) async {
     try {
       final userId = _userId;
       if (userId == null) return null;
 
+      // Determine sender based on context
+      final senderType = contextType ?? 'user';
+      final senderId = (contextType == 'team' && contextId != null) ? contextId : userId;
+
       final response = await _supabase.from('chat_messages').insert({
         'room_id': roomId,
-        'sender_type': 'user',
-        'sender_id': userId,
+        'sender_type': senderType,
+        'sender_id': senderId,
         'content': content,
         'message_type': messageType,
         if (mediaUrl != null) 'media_url': mediaUrl,
+        if (sharedPostId != null) 'shared_post_id': sharedPostId,
       }).select().single();
 
       return ChatMessage(
@@ -369,6 +432,7 @@ class ChatRepository {
         content: response['content'],
         messageType: response['message_type'] ?? 'text',
         mediaUrl: response['media_url'],
+        sharedPostId: response['shared_post_id'],
         isRead: false,
         isOwn: true,
         createdAt: DateTime.parse(response['created_at']),
@@ -400,6 +464,7 @@ class ChatRepository {
             content: msg['content'],
             messageType: msg['message_type'] ?? 'text',
             mediaUrl: msg['media_url'],
+            sharedPostId: msg['shared_post_id'],
             isRead: msg['is_read'] ?? false,
             isOwn: msg['sender_id'] == _userId,
             createdAt: DateTime.parse(msg['created_at']),

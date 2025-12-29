@@ -98,7 +98,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     _LoginInput(
                         controller: _emailController,
                         icon: Icons.email_outlined,
-                        hint: 'E-posta'),
+                        hint: 'E-posta',
+                        keyboardType: TextInputType.emailAddress),
                     const SizedBox(height: 16),
                     _LoginInput(
                         controller: _passwordController,
@@ -217,12 +218,14 @@ class _LoginInput extends StatelessWidget {
   final IconData icon;
   final String hint;
   final bool isPassword;
+  final TextInputType? keyboardType;
 
   const _LoginInput({
     required this.controller,
     required this.icon,
     required this.hint,
     this.isPassword = false,
+    this.keyboardType,
   });
 
   @override
@@ -230,6 +233,7 @@ class _LoginInput extends StatelessWidget {
     return TextField(
       controller: controller,
       obscureText: isPassword,
+      keyboardType: keyboardType,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         prefixIcon: Icon(icon, color: Colors.grey),

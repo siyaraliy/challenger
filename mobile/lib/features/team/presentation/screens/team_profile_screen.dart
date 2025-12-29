@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/cubit/mode_cubit.dart';
 import '../../../../core/models/app_mode_state.dart';
 import '../../../../core/di/service_locator.dart';
@@ -13,7 +14,12 @@ import '../../data/repositories/team_repository.dart';
 import '../../data/repositories/challenge_repository.dart';
 
 class TeamProfileScreen extends StatefulWidget {
-  const TeamProfileScreen({super.key});
+  final String? teamId;
+
+  const TeamProfileScreen({
+    super.key,
+    this.teamId,
+  });
 
   @override
   State<TeamProfileScreen> createState() => _TeamProfileScreenState();
@@ -34,6 +40,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> with SingleTicker
   int _matchesPlayed = 0;
   String? _lastTeamId; // Track last loaded team
   bool _isVisible = false;
+  bool _isFollowing = false;
+  bool _isOwnTeam = false;
 
   @override
   void initState() {
@@ -92,11 +100,19 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> with SingleTicker
         });
       }
     } catch (e) {
-      print('Error refreshing points: $e');
+      debugPrint('Error refreshing points: $e');
     }
   }
 
   void _loadDataIfNeeded() {
+    if (widget.teamId != null) {
+      if (widget.teamId != _lastTeamId) {
+        _lastTeamId = widget.teamId;
+        _loadTeamData();
+      }
+      return;
+    }
+
     final modeState = context.read<ModeCubit>().state;
     if (modeState.isTeamMode && modeState.teamId != _lastTeamId) {
       _lastTeamId = modeState.teamId;
@@ -108,10 +124,10 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> with SingleTicker
   }
 
   Future<void> _loadTeamData() async {
-    final modeState = context.read<ModeCubit>().state;
-    if (!modeState.isTeamMode || modeState.teamId == null) return;
+    final currentUserId = getIt<SupabaseClient>().auth.currentUser?.id;
+    final teamId = widget.teamId ?? context.read<ModeCubit>().state.teamId;
 
-    final teamId = modeState.teamId!;
+    if (teamId == null) return;
 
     try {
       // Load team info
@@ -123,6 +139,12 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> with SingleTicker
       // Load team posts
       final allPosts = await _postsRepo.getFeed();
       final teamPosts = allPosts.where((p) => p.authorType == 'team' && p.authorId == teamId).toList();
+
+      // Check following status
+      final isFollowing = await _teamRepo.isFollowingTeam(teamId);
+      
+      // Check if it's user's own team (as captain)
+      final isOwnTeam = team?.captainId == currentUserId;
       
       setState(() {
         _team = team;
@@ -130,12 +152,40 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> with SingleTicker
         _matchesPlayed = points?['matches_played'] ?? 0;
         _mediaPosts = teamPosts.where((p) => p.mediaType != MediaType.none).toList();
         _textPosts = teamPosts.where((p) => p.mediaType == MediaType.none).toList();
+        _isFollowing = isFollowing;
+        _isOwnTeam = isOwnTeam;
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading team data: $e');
+      debugPrint('Error loading team data: $e');
       if (mounted) {
         setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _toggleFollow() async {
+    if (_team == null) return;
+    
+    final originalStatus = _isFollowing;
+    setState(() {
+      _isFollowing = !originalStatus;
+    });
+
+    try {
+      if (originalStatus) {
+        await _teamRepo.unfollowTeam(_team!.id);
+      } else {
+        await _teamRepo.followTeam(_team!.id);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isFollowing = originalStatus;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('İşlem başarısız: $e')),
+        );
       }
     }
   }
@@ -157,8 +207,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> with SingleTicker
           appBar: AppBar(
             title: const Text('Takım Profili'),
             centerTitle: true,
-            actions: const [
-              ModeSwitcherButton(),
+            actions: [
+              if (widget.teamId == null) const ModeSwitcherButton(),
             ],
           ),
           body: _isLoading
@@ -232,6 +282,23 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> with SingleTicker
                               ],
                             ),
                           ),
+                          const SizedBox(height: 16),
+                          
+                          // Follow button (only if not own team)
+                          if (!_isOwnTeam) ...[
+                            SizedBox(
+                              width: 200,
+                              child: ElevatedButton(
+                                onPressed: _toggleFollow,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: _isFollowing ? Colors.grey[800] : theme.colorScheme.primary,
+                                  foregroundColor: _isFollowing ? Colors.white : Colors.black,
+                                ),
+                                child: Text(_isFollowing ? 'Takibi Bırak' : 'Takip Et'),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
                         ],
                       ),
                     ),
@@ -339,7 +406,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> with SingleTicker
                         Image.network(
                           post.mediaUrl!,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
+                          errorBuilder: (_, _, _) => Container(
                             color: Colors.grey[800],
                             child: const Icon(Icons.broken_image, color: Colors.grey),
                           ),
@@ -405,7 +472,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> with SingleTicker
               padding: const EdgeInsets.all(8),
               physics: const AlwaysScrollableScrollPhysics(),
               itemCount: _textPosts.length,
-              separatorBuilder: (_, __) => Divider(color: Colors.grey[800]),
+              separatorBuilder: (_, _) => Divider(color: Colors.grey[800]),
               itemBuilder: (context, index) {
                 final post = _textPosts[index];
                 return GestureDetector(

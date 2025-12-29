@@ -17,6 +17,16 @@ class TeamRepository {
         throw Exception('Kullanıcı oturumu bulunamadı');
       }
 
+      // Check if user is already a captain
+      final captainCount = await _supabase
+          .from('teams')
+          .count(CountOption.exact)
+          .eq('captain_id', captainId);
+      
+      if (captainCount >= 1) {
+        throw Exception('Maksimum 1 takımın kaptanı olabilirsiniz');
+      }
+
       String? logoUrl;
 
       // Upload logo if provided
@@ -143,6 +153,16 @@ class TeamRepository {
   /// Add member to team
   Future<void> addTeamMember(String teamId, String userId) async {
     try {
+      // Check membership limit
+      final membershipCount = await _supabase
+          .from('team_members')
+          .count(CountOption.exact)
+          .eq('user_id', userId);
+
+      if (membershipCount >= 2) {
+        throw Exception('Kullanıcı maksimum 2 takıma üye olabilir');
+      }
+
       await _supabase.from('team_members').insert({
         'team_id': teamId,
         'user_id': userId,
@@ -191,6 +211,100 @@ class TeamRepository {
           .toList();
     } catch (e) {
       throw Exception('Takımlar getirilemedi: ${e.toString()}');
+    }
+  }
+
+  /// Search teams by name
+  Future<List<Team>> searchTeams(String query) async {
+    try {
+      final response = await _supabase
+          .from('teams')
+          .select()
+          .ilike('name', '%$query%')
+          .limit(20);
+
+      return (response as List)
+          .map((e) => Team.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw Exception('Takım aranamadı: ${e.toString()}');
+    }
+  }
+
+  /// Follow a team
+  Future<void> followTeam(String teamId) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) throw Exception('Kullanıcı oturumu bulunamadı');
+
+      await _supabase.from('team_follows').insert({
+        'follower_id': userId,
+        'team_id': teamId,
+      });
+    } catch (e) {
+      throw Exception('Takım takip edilemedi: ${e.toString()}');
+    }
+  }
+
+  /// Unfollow a team
+  Future<void> unfollowTeam(String teamId) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) throw Exception('Kullanıcı oturumu bulunamadı');
+
+      await _supabase
+          .from('team_follows')
+          .delete()
+          .eq('follower_id', userId)
+          .eq('team_id', teamId);
+    } catch (e) {
+      throw Exception('Takım takibi bırakılamadı: ${e.toString()}');
+    }
+  }
+
+  /// Check if following a team
+  Future<bool> isFollowingTeam(String teamId) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return false;
+
+      final response = await _supabase
+          .from('team_follows')
+          .select()
+          .eq('follower_id', userId)
+          .eq('team_id', teamId)
+          .maybeSingle();
+
+      return response != null;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Get teams followed by user
+  Future<List<Team>> getFollowedTeams(String userId) async {
+    try {
+      final response = await _supabase
+          .from('team_follows')
+          .select('team_id')
+          .eq('follower_id', userId);
+
+      final ids = (response as List)
+          .map((e) => e['team_id'] as String)
+          .toList();
+
+      if (ids.isEmpty) return [];
+
+      final teamsResponse = await _supabase
+          .from('teams')
+          .select()
+          .inFilter('id', ids);
+
+      return (teamsResponse as List)
+          .map((e) => Team.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw Exception('Takip edilen takımlar getirilemedi: ${e.toString()}');
     }
   }
 }

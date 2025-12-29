@@ -1,0 +1,196 @@
+Analyzing mobile...                                             
+
+   info - Constructors in '@immutable' classes should be declared as 'const' - lib\core\models\app_mode_state.dart:21:3 - prefer_const_constructors_in_immutables
+   info - Use an initializing formal to assign a parameter to a field - lib\core\models\app_mode_state.dart:25:9 - prefer_initializing_formals
+   info - Use an initializing formal to assign a parameter to a field - lib\core\models\app_mode_state.dart:26:9 - prefer_initializing_formals
+warning - Unused import: '../../features/team/presentation/screens/team_detail_screen.dart' - lib\core\router\app_router.dart:24:8 - unused_import
+warning - Unused import: '../../features/team/presentation/screens/team_settings_screen.dart' - lib\core\router\app_router.dart:29:8 - unused_import
+warning - The declaration '_shellNavigatorKey' isn't referenced - lib\core\router\app_router.dart:36:7 - unused_element
+   info - Don't use 'BuildContext's across async gaps - lib\core\widgets\mode_switcher_button.dart:25:38 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\core\widgets\mode_switcher_button.dart:26:34 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\core\widgets\mode_switcher_button.dart:31:11 - use_build_context_synchronously
+   info - Don't invoke 'print' in production code - lib\core\widgets\mode_switcher_button.dart:78:9 - avoid_print
+warning - Unused import: 'video_player_widget.dart' - lib\core\widgets\post_card.dart:4:8 - unused_import
+  error - Expected an identifier - lib\core\widgets\post_card.dart:72:28 - missing_identifier
+  error - Expected to find ':' - lib\core\widgets\post_card.dart:72:28 - expected_token
+  error - Expected an identifier - lib\core\widgets\post_card.dart:73:27 - missing_identifier
+  error - Expected to find ')' - lib\core\widgets\post_card.dart:73:27 - expected_token
+  error - Expected to find ',' - lib\core\widgets\post_card.dart:73:27 - expected_token
+  error - Too many positional arguments: 0 expected, but 1 found - lib\core\widgets\post_card.dart:79:23 - extra_positional_arguments_could_be_named
+  error - Expected to find ')' - lib\core\widgets\post_card.dart:85:21 - expected_token
+  error - Expected to find ';' - lib\core\widgets\post_card.dart:94:11 - expected_token
+warning - Dead code - lib\core\widgets\post_card.dart:94:12 - dead_code
+  error - Expected an identifier - lib\core\widgets\post_card.dart:94:12 - missing_identifier
+  error - Unexpected text ';' - lib\core\widgets\post_card.dart:94:12 - unexpected_token
+   info - Statements in an if should be enclosed in a block - lib\core\widgets\post_card.dart:98:13 - curly_braces_in_flow_control_structures
+  error - Expected to find ';' - lib\core\widgets\post_card.dart:98:38 - expected_token
+  error - Expected an identifier - lib\core\widgets\post_card.dart:98:39 - missing_identifier
+  error - Unexpected text ';' - lib\core\widgets\post_card.dart:98:39 - unexpected_token
+  error - Expected to find ';' - lib\core\widgets\post_card.dart:170:11 - expected_token
+  error - Expected an identifier - lib\core\widgets\post_card.dart:170:12 - missing_identifier
+  error - Expected to find ';' - lib\core\widgets\post_card.dart:170:12 - expected_token
+  error - Unexpected text ';' - lib\core\widgets\post_card.dart:170:12 - unexpected_token
+  error - Expected an identifier - lib\core\widgets\post_card.dart:171:9 - missing_identifier
+  error - Expected to find ';' - lib\core\widgets\post_card.dart:171:9 - expected_token
+  error - Unexpected text ';' - lib\core\widgets\post_card.dart:171:9 - unexpected_token
+  error - Expected an identifier - lib\core\widgets\post_card.dart:171:10 - missing_identifier
+  error - Expected to find ';' - lib\core\widgets\post_card.dart:171:10 - expected_token
+  error - Unexpected text ';' - lib\core\widgets\post_card.dart:171:10 - unexpected_token
+  error - Expected an identifier - lib\core\widgets\post_card.dart:172:7 - missing_identifier
+  error - Expected to find ';' - lib\core\widgets\post_card.dart:172:7 - expected_token
+  error - Unexpected text ';' - lib\core\widgets\post_card.dart:172:7 - unexpected_token
+  error - Expected an identifier - lib\core\widgets\post_card.dart:172:8 - missing_identifier
+  error - Expected to find ';' - lib\core\widgets\post_card.dart:172:8 - expected_token
+  error - Unexpected text ';' - lib\core\widgets\post_card.dart:172:8 - unexpected_token
+  error - Expected an identifier - lib\core\widgets\post_card.dart:173:5 - missing_identifier
+  error - Unexpected text ';' - lib\core\widgets\post_card.dart:173:5 - unexpected_token
+   info - Unnecessary empty statement - lib\core\widgets\post_card.dart:173:6 - empty_statements
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\core\widgets\video_feed_item.dart:117:41 - deprecated_member_use
+   info - Don't invoke 'print' in production code - lib\core\widgets\video_player_widget.dart:31:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\widgets\video_player_widget.dart:37:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\widgets\video_player_widget.dart:42:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\core\widgets\video_player_widget.dart:43:7 - avoid_print
+warning - Unnecessary cast - lib\features\auth\presentation\bloc\auth_bloc.dart:128:32 - unnecessary_cast
+warning - Unnecessary cast - lib\features\auth\presentation\bloc\auth_bloc.dart:163:30 - unnecessary_cast
+warning - Unnecessary cast - lib\features\auth\presentation\bloc\auth_bloc.dart:187:30 - unnecessary_cast
+warning - Unnecessary cast - lib\features\auth\presentation\bloc\auth_bloc.dart:224:30 - unnecessary_cast
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:36:7 - avoid_print
+warning - The value of the local variable 'name' isn't used - lib\features\chat\data\chat_repository.dart:109:17 - unused_local_variable
+  error - The name 'name' is already defined - lib\features\chat\data\chat_repository.dart:109:17 - duplicate_definition
+warning - The value of the local variable 'avatarUrl' isn't used - lib\features\chat\data\chat_repository.dart:110:17 - unused_local_variable
+  error - The name 'avatarUrl' is already defined - lib\features\chat\data\chat_repository.dart:110:17 - duplicate_definition
+warning - The value of the local variable 'otherParticipant' isn't used - lib\features\chat\data\chat_repository.dart:118:17 - unused_local_variable
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:177:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:207:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:278:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:342:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:420:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:455:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:503:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:552:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:566:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:580:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:589:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:590:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:600:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:609:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:612:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:684:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:687:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:717:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:725:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:738:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:741:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:748:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:749:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:757:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\data\chat_repository.dart:760:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\presentation\bloc\chat_room_bloc.dart:215:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\presentation\bloc\chat_room_bloc.dart:282:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\presentation\bloc\chat_room_bloc.dart:307:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\presentation\bloc\chat_room_bloc.dart:332:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\presentation\bloc\chat_room_bloc.dart:345:23 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\presentation\screens\conversations_list_screen.dart:334:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\presentation\screens\conversations_list_screen.dart:338:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\presentation\screens\conversations_list_screen.dart:346:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\presentation\screens\conversations_list_screen.dart:354:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\presentation\screens\conversations_list_screen.dart:357:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\presentation\screens\conversations_list_screen.dart:362:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\presentation\screens\conversations_list_screen.dart:367:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\presentation\screens\conversations_list_screen.dart:371:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\chat\presentation\screens\conversations_list_screen.dart:378:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\home\data\posts_repository.dart:40:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\home\data\posts_repository.dart:57:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\home\data\posts_repository.dart:77:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\home\data\posts_repository.dart:89:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\home\data\posts_repository.dart:98:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\home\data\posts_repository.dart:136:11 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\home\data\posts_repository.dart:137:11 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\home\data\posts_repository.dart:141:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\home\data\posts_repository.dart:144:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\home\data\posts_repository.dart:153:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\home\data\posts_repository.dart:176:7 - avoid_print
+warning - The operand can't be 'null', so the condition is always 'false' - lib\features\home\data\posts_repository.dart:220:32 - unnecessary_null_comparison
+   info - Don't invoke 'print' in production code - lib\features\home\data\posts_repository.dart:227:11 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\home\data\posts_repository.dart:231:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\home\data\posts_repository.dart:234:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\home\data\posts_repository.dart:273:7 - avoid_print
+   info - Don't use 'BuildContext's across async gaps - lib\features\home\presentation\screens\home_screen.dart:73:28 - use_build_context_synchronously
+warning - The declaration '_shouldShowChallengeButton' isn't referenced - lib\features\home\presentation\screens\home_screen.dart:111:8 - unused_element
+   info - Don't use 'BuildContext's across async gaps - lib\features\home\presentation\widgets\comments_sheet.dart:136:28 - use_build_context_synchronously
+warning - The operand can't be 'null', so the condition is always 'true' - lib\features\home\presentation\widgets\comments_sheet.dart:232:58 - unnecessary_null_comparison
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\home\presentation\widgets\comments_sheet.dart:308:65 - deprecated_member_use
+   info - The private field _sendingTo could be 'final' - lib\features\home\presentation\widgets\share_bottom_sheet.dart:26:15 - prefer_final_fields
+   info - Don't invoke 'print' in production code - lib\features\home\presentation\widgets\share_bottom_sheet.dart:74:7 - avoid_print
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\profile\presentation\screens\other_profile_screen.dart:108:54 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\profile\presentation\screens\profile_screen.dart:354:60 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\profile\presentation\screens\profile_screen.dart:443:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\profile\presentation\screens\profile_screen.dart:450:63 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\profile\presentation\screens\profile_screen.dart:457:50 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\features\profile\presentation\screens\user_profile_screen.dart:257:19 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\features\profile\presentation\widgets\profile_edit_dialog.dart:110:15 - deprecated_member_use
+   info - Don't invoke 'print' in production code - lib\features\profile\presentation\widgets\profile_posts_tab.dart:30:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\profile\presentation\widgets\profile_posts_tab.dart:36:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\profile\presentation\widgets\profile_posts_tab.dart:49:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\profile\presentation\widgets\profile_posts_tab.dart:53:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\profile\presentation\widgets\profile_posts_tab.dart:59:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\profile\presentation\widgets\profile_posts_tab.dart:66:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\profile\presentation\widgets\profile_posts_tab.dart:72:7 - avoid_print
+   info - Unnecessary use of multiple underscores - lib\features\profile\presentation\widgets\profile_posts_tab.dart:186:45 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\features\profile\presentation\widgets\profile_posts_tab.dart:186:49 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\features\profile\presentation\widgets\profile_posts_tab.dart:259:37 - unnecessary_underscores
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:12:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:39:11 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:43:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:46:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:54:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:81:11 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:85:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:88:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:102:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:117:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:120:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:133:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:136:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:149:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:152:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:166:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:169:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:182:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:185:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:204:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:220:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:256:11 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:262:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:288:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:291:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:304:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:307:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:320:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:323:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\data\repositories\challenge_repository.dart:339:7 - avoid_print
+  error - The getter 'count' isn't defined for the type 'int' - lib\features\team\data\repositories\team_repository.dart:26:24 - undefined_getter
+  error - The getter 'count' isn't defined for the type 'int' - lib\features\team\data\repositories\team_repository.dart:162:27 - undefined_getter
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\team\presentation\screens\create_challenge_screen.dart:318:67 - deprecated_member_use
+   info - Don't invoke 'print' in production code - lib\features\team\presentation\screens\team_chat_screen.dart:29:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\presentation\screens\team_chat_screen.dart:32:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\presentation\screens\team_chat_screen.dart:36:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\presentation\screens\team_chat_screen.dart:41:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\presentation\screens\team_chat_screen.dart:57:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\presentation\screens\team_chat_screen.dart:64:7 - avoid_print
+warning - Unused import: '../../../../core/widgets/mode_switcher_button.dart' - lib\features\team\presentation\screens\team_home_screen.dart:5:8 - unused_import
+   info - Don't invoke 'print' in production code - lib\features\team\presentation\screens\team_matches_screen.dart:66:7 - avoid_print
+   info - Don't use 'BuildContext's across async gaps - lib\features\team\presentation\screens\team_matches_screen.dart:152:28 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\features\team\presentation\screens\team_matches_screen.dart:157:28 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\features\team\presentation\screens\team_matches_screen.dart:166:28 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\features\team\presentation\screens\team_matches_screen.dart:171:28 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\features\team\presentation\screens\team_matches_screen.dart:226:28 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\features\team\presentation\screens\team_matches_screen.dart:231:28 - use_build_context_synchronously
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\team\presentation\screens\team_matches_screen.dart:388:52 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\team\presentation\screens\team_matches_screen.dart:446:70 - deprecated_member_use
+   info - Don't invoke 'print' in production code - lib\features\team\presentation\screens\team_profile_screen.dart:95:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\features\team\presentation\screens\team_profile_screen.dart:136:7 - avoid_print
+   info - Unnecessary use of multiple underscores - lib\features\team\presentation\screens\team_profile_screen.dart:342:45 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\features\team\presentation\screens\team_profile_screen.dart:342:49 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\features\team\presentation\screens\team_profile_screen.dart:408:37 - unnecessary_underscores
+

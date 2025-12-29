@@ -331,22 +331,51 @@ export class ChatService {
         };
     }
 
-    // Helper: Verify user is a participant
+    // Helper: Verify user is a participant (directly or via team membership)
     private async verifyParticipant(roomId: string, userId: string) {
-        const { data, error } = await this.supabaseService.client
+        // First check if user is a direct participant
+        const { data: directParticipant } = await this.supabaseService.client
             .from('chat_participants')
             .select('status')
             .eq('room_id', roomId)
+            .eq('participant_type', 'user')
             .eq('participant_id', userId)
             .single();
 
-        if (error || !data) {
-            throw new ForbiddenException('You are not a participant of this chat');
+        if (directParticipant?.status === 'approved') {
+            return; // User is approved direct participant
         }
 
-        if (data.status !== 'approved') {
+        // Check if user is a member of a team that is a participant
+        const { data: teamMemberships } = await this.supabaseService.client
+            .from('team_members')
+            .select('team_id')
+            .eq('user_id', userId);
+
+        if (teamMemberships && teamMemberships.length > 0) {
+            const teamIds = teamMemberships.map(tm => tm.team_id);
+            
+            const { data: teamParticipant } = await this.supabaseService.client
+                .from('chat_participants')
+                .select('status')
+                .eq('room_id', roomId)
+                .eq('participant_type', 'team')
+                .in('participant_id', teamIds)
+                .eq('status', 'approved')
+                .limit(1)
+                .single();
+
+            if (teamParticipant) {
+                return; // User's team is approved participant
+            }
+        }
+
+        // Check if user has pending status
+        if (directParticipant?.status === 'pending') {
             throw new ForbiddenException('Your participation is pending approval');
         }
+
+        throw new ForbiddenException('You are not a participant of this chat');
     }
 
     // Helper: Verify user is admin

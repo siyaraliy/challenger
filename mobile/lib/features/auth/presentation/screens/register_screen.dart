@@ -125,6 +125,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         controller: _emailController,
                         icon: Icons.email_outlined,
                         hint: 'E-posta',
+                        keyboardType: TextInputType.emailAddress,
                         validator: (v) => v!.contains('@') ? null : 'Geçersiz email',
                       ),
                       const SizedBox(height: 16),
@@ -189,6 +190,7 @@ class _RegisterInput extends StatelessWidget {
   final String hint;
   final bool isPassword;
   final String? Function(String?)? validator;
+  final TextInputType? keyboardType;
 
   const _RegisterInput({
     required this.controller,
@@ -196,6 +198,7 @@ class _RegisterInput extends StatelessWidget {
     required this.hint,
     this.isPassword = false,
     this.validator,
+    this.keyboardType,
   });
 
   @override
@@ -204,6 +207,7 @@ class _RegisterInput extends StatelessWidget {
       controller: controller,
       obscureText: isPassword,
       validator: validator,
+      keyboardType: keyboardType,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         prefixIcon: Icon(icon, color: Colors.grey),

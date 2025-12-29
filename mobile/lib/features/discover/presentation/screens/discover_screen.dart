@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/di/service_locator.dart';
+import '../../../../core/models/user_profile.dart';
+import '../../../../core/models/team.dart';
+import '../../../profile/data/repositories/profile_repository.dart';
+import '../../../team/data/repositories/team_repository.dart';
 
 class DiscoverScreen extends StatefulWidget {
   const DiscoverScreen({super.key});
@@ -10,6 +15,13 @@ class DiscoverScreen extends StatefulWidget {
 
 class _DiscoverScreenState extends State<DiscoverScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final ProfileRepository _profileRepo = getIt<ProfileRepository>();
+  final TeamRepository _teamRepo = getIt<TeamRepository>();
+
+  List<UserProfile> _profiles = [];
+  List<Team> _teams = [];
+  bool _isSearching = false;
+  bool _isLoadingResults = false;
 
   @override
   void dispose() {
@@ -50,16 +62,158 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                 ),
               ),
               onChanged: (value) {
-                // TODO: Implement search
+                _handleSearch(value);
               },
             ),
           ),
 
           // Content
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
+            child: _isSearching ? _buildSearchResults(theme) : _buildDiscoverContent(context, theme),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleSearch(String query) async {
+    if (query.trim().isEmpty) {
+      setState(() {
+        _isSearching = false;
+        _profiles = [];
+        _teams = [];
+      });
+      return;
+    }
+
+    setState(() {
+      _isSearching = true;
+      _isLoadingResults = true;
+    });
+
+    try {
+      final profiles = await _profileRepo.searchProfiles(query);
+      final teams = await _teamRepo.searchTeams(query);
+
+      if (mounted) {
+        setState(() {
+          _profiles = profiles;
+          _teams = teams;
+          _isLoadingResults = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingResults = false);
+      }
+    }
+  }
+
+  Widget _buildSearchResults(ThemeData theme) {
+    if (_isLoadingResults) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_profiles.isEmpty && _teams.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 64, color: Colors.grey[700]),
+            const SizedBox(height: 16),
+            Text(
+              'Sonuç bulunamadı',
+              style: TextStyle(color: Colors.grey[500], fontSize: 16),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      children: [
+        if (_profiles.isNotEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Text(
+              'Kullanıcılar',
+              style: theme.textTheme.titleSmall?.copyWith(
+                color: Colors.grey,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          ..._profiles.map((profile) => _buildUserResultTile(profile)),
+        ],
+        if (_teams.isNotEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Text(
+              'Takımlar',
+              style: theme.textTheme.titleSmall?.copyWith(
+                color: Colors.grey,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          ..._teams.map((team) => _buildTeamResultTile(team, theme)),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildUserResultTile(UserProfile profile) {
+    return ListTile(
+      onTap: () => context.push('/user/${profile.id}'),
+      contentPadding: EdgeInsets.zero,
+      leading: CircleAvatar(
+        radius: 20,
+        backgroundImage: profile.avatarUrl != null ? NetworkImage(profile.avatarUrl!) : null,
+        child: profile.avatarUrl == null ? const Icon(Icons.person) : null,
+      ),
+      title: Text(
+        profile.fullName ?? 'İsimsiz Kullanıcı',
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      ),
+      subtitle: Text(
+        profile.position ?? 'Oyuncu',
+        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+      ),
+      trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+    );
+  }
+
+  Widget _buildTeamResultTile(Team team, ThemeData theme) {
+    return ListTile(
+      onTap: () => context.push('/team/${team.id}'),
+      contentPadding: EdgeInsets.zero,
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.grey[800],
+          image: team.logoUrl != null ? DecorationImage(image: NetworkImage(team.logoUrl!), fit: BoxFit.cover) : null,
+        ),
+        child: team.logoUrl == null ? const Icon(Icons.shield, color: Colors.white, size: 20) : null,
+      ),
+      title: Text(
+        team.name,
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      ),
+      subtitle: Text(
+        'Takım',
+        style: TextStyle(color: theme.colorScheme.primary, fontSize: 12),
+      ),
+      trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+    );
+  }
+
+  Widget _buildDiscoverContent(BuildContext context, ThemeData theme) {
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      children: [
                 // Challenges Section
                 _buildChallengesCard(context, theme),
 
@@ -97,10 +251,6 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                   ),
                 ),
               ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 

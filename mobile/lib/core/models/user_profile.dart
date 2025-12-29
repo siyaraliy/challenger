@@ -7,6 +7,8 @@ class UserProfile extends Equatable {
   final String? position;
   final String? bio;
   final DateTime createdAt;
+  final int followersCount;
+  final int followingCount;
 
   const UserProfile({
     required this.id,
@@ -15,6 +17,8 @@ class UserProfile extends Equatable {
     this.position,
     this.bio,
     required this.createdAt,
+    this.followersCount = 0,
+    this.followingCount = 0,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -25,6 +29,8 @@ class UserProfile extends Equatable {
       position: json['position'] as String?,
       bio: json['bio'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
+      followersCount: json['followers_count'] ?? 0,
+      followingCount: json['following_count'] ?? 0,
     );
   }
 
@@ -36,6 +42,8 @@ class UserProfile extends Equatable {
       'position': position,
       'bio': bio,
       'created_at': createdAt.toIso8601String(),
+      'followers_count': followersCount,
+      'following_count': followingCount,
     };
   }
 
@@ -46,6 +54,8 @@ class UserProfile extends Equatable {
     String? position,
     String? bio,
     DateTime? createdAt,
+    int? followersCount,
+    int? followingCount,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -54,9 +64,11 @@ class UserProfile extends Equatable {
       position: position ?? this.position,
       bio: bio ?? this.bio,
       createdAt: createdAt ?? this.createdAt,
+      followersCount: followersCount ?? this.followersCount,
+      followingCount: followingCount ?? this.followingCount,
     );
   }
 
   @override
-  List<Object?> get props => [id, fullName, avatarUrl, position, bio, createdAt];
+  List<Object?> get props => [id, fullName, avatarUrl, position, bio, createdAt, followersCount, followingCount];
 }
