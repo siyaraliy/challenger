@@ -32,6 +32,20 @@ class ProfileAvatarUploadRequested extends ProfileEvent {
   List<Object?> get props => [image];
 }
 
+class ProfileFollowUserRequested extends ProfileEvent {
+  final String targetUserId;
+  const ProfileFollowUserRequested(this.targetUserId);
+  @override
+  List<Object?> get props => [targetUserId];
+}
+
+class ProfileUnfollowUserRequested extends ProfileEvent {
+  final String targetUserId;
+  const ProfileUnfollowUserRequested(this.targetUserId);
+  @override
+  List<Object?> get props => [targetUserId];
+}
+
 // States
 abstract class ProfileState extends Equatable {
   const ProfileState();
@@ -45,9 +59,17 @@ class ProfileLoading extends ProfileState {}
 
 class ProfileLoaded extends ProfileState {
   final UserProfile profile;
-  const ProfileLoaded(this.profile);
+  final bool isFollowing;
+  const ProfileLoaded(this.profile, {this.isFollowing = false});
   @override
-  List<Object?> get props => [profile];
+  List<Object?> get props => [profile, isFollowing];
+  
+  ProfileLoaded copyWith({UserProfile? profile, bool? isFollowing}) {
+    return ProfileLoaded(
+      profile ?? this.profile,
+      isFollowing: isFollowing ?? this.isFollowing,
+    );
+  }
 }
 
 class ProfileUpdating extends ProfileState {}
@@ -76,6 +98,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<ProfileLoadRequested>(_onLoadRequested);
     on<ProfileUpdateRequested>(_onUpdateRequested);
     on<ProfileAvatarUploadRequested>(_onAvatarUploadRequested);
+    on<ProfileFollowUserRequested>(_onFollowRequested);
+    on<ProfileUnfollowUserRequested>(_onUnfollowRequested);
   }
 
   Future<void> _onLoadRequested(
@@ -86,7 +110,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     try {
       final profile = await _profileRepository.getProfile(event.userId);
       if (profile != null) {
-        emit(ProfileLoaded(profile));
+        final isFollowing = await _profileRepository.isFollowing(event.userId);
+        emit(ProfileLoaded(profile, isFollowing: isFollowing));
       } else {
         emit(const ProfileError('Profil bulunamadı'));
       }
@@ -103,7 +128,9 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     try {
       await _profileRepository.updateProfile(event.profile);
       emit(ProfileUpdated(event.profile));
-      emit(ProfileLoaded(event.profile)); // Back to loaded state
+      // Re-emit loaded with same follow status if possible, or just default
+      // Since update is usually for self, isFollowing is likely false.
+      emit(ProfileLoaded(event.profile, isFollowing: false)); 
     } catch (e) {
       emit(ProfileError(e.toString()));
     }
@@ -113,7 +140,6 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     ProfileAvatarUploadRequested event,
     Emitter<ProfileState> emit,
   ) async {
-    // Store current profile before changing state
     final currentState = state;
     if (currentState is! ProfileLoaded) {
       emit(const ProfileError('Profil yüklenmemiş'));
@@ -121,17 +147,60 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     }
     
     final currentProfile = currentState.profile;
+    final currentFollowStatus = currentState.isFollowing;
+    
     emit(ProfileAvatarUploading());
     
     try {
       final avatarUrl = await _profileRepository.uploadAvatar(event.image);
       final updatedProfile = currentProfile.copyWith(avatarUrl: avatarUrl);
       await _profileRepository.updateProfile(updatedProfile);
-      emit(ProfileLoaded(updatedProfile));
+      emit(ProfileLoaded(updatedProfile, isFollowing: currentFollowStatus));
     } catch (e) {
       emit(ProfileError(e.toString()));
-      // Return to previous loaded state on error
-      emit(ProfileLoaded(currentProfile));
+      emit(ProfileLoaded(currentProfile, isFollowing: currentFollowStatus));
+    }
+  }
+
+  Future<void> _onFollowRequested(
+    ProfileFollowUserRequested event,
+    Emitter<ProfileState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is! ProfileLoaded) return;
+    
+    try {
+      await _profileRepository.followUser(event.targetUserId);
+      
+      // Optimistic update
+      final updatedProfile = currentState.profile.copyWith(
+        followersCount: currentState.profile.followersCount + 1,
+      );
+      emit(currentState.copyWith(profile: updatedProfile, isFollowing: true));
+    } catch (e) {
+      emit(ProfileError(e.toString()));
+      emit(currentState);
+    }
+  }
+
+  Future<void> _onUnfollowRequested(
+    ProfileUnfollowUserRequested event,
+    Emitter<ProfileState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is! ProfileLoaded) return;
+    
+    try {
+      await _profileRepository.unfollowUser(event.targetUserId);
+      
+      // Optimistic update
+      final updatedProfile = currentState.profile.copyWith(
+        followersCount: (currentState.profile.followersCount - 1).clamp(0, 999999),
+      );
+      emit(currentState.copyWith(profile: updatedProfile, isFollowing: false));
+    } catch (e) {
+      emit(ProfileError(e.toString()));
+      emit(currentState);
     }
   }
 }

@@ -27,6 +27,36 @@ services:
       - challenger_net
     restart: always
 
+  backend:
+    image: aydinemre23/challenger-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: challenger_backend
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=challenger_user
+      - DB_PASSWORD=challenger_password
+      - DB_NAME=challenger_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      # NOTE: SUPABASE keys and JWT secrets should be in a .env file or added here.
+      # For now, we assume they are passed or user will add them to .env file loaded by compose if needed later.
+      # To load from .env file, we could add 'env_file: .env' here if one exists at root.
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - challenger_net
+    # command: npm run start:dev # Already default for dev stage via package.json but good to be explicit if needed
+
 volumes:
   postgres_data:
   redis_data:

@@ -46,6 +46,7 @@ dependencies:
   supabase_flutter: ^2.8.2
   image_picker: ^1.0.7
   video_player: ^2.10.1
+  visibility_detector: ^0.4.0+2
 
 dev_dependencies:
   flutter_test:

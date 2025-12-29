@@ -18,6 +18,8 @@ import '../../features/chat/presentation/bloc/chat_list_bloc.dart';
 import '../../features/chat/presentation/bloc/chat_room_bloc.dart';
 import '../../features/chat/data/chat_repository.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
+import '../../features/profile/presentation/screens/other_profile_screen.dart';
+import '../../features/profile/presentation/screens/follow_list_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/team/presentation/screens/create_team_screen.dart';
 import '../../features/team/presentation/screens/team_detail_screen.dart';
@@ -108,6 +110,38 @@ class AppRouter {
       GoRoute(
         path: '/notifications',
         builder: (context, state) => const NotificationsScreen(),
+      ),
+      // Team Profile (Other teams)
+      GoRoute(
+        path: '/team/:teamId',
+        builder: (context, state) {
+          final teamId = state.pathParameters['teamId']!;
+          return TeamProfileScreen(teamId: teamId);
+        },
+      ),
+      // User Profile (Other users)
+      GoRoute(
+        path: '/user/:userId',
+        builder: (context, state) {
+          final userId = state.pathParameters['userId']!;
+          return OtherProfileScreen(userId: userId);
+        },
+      ),
+      // Followers List
+      GoRoute(
+        path: '/followers/:userId',
+        builder: (context, state) {
+          final userId = state.pathParameters['userId']!;
+          return FollowListScreen(userId: userId, initialTab: 0);
+        },
+      ),
+      // Following List
+      GoRoute(
+        path: '/following/:userId',
+        builder: (context, state) {
+          final userId = state.pathParameters['userId']!;
+          return FollowListScreen(userId: userId, initialTab: 1);
+        },
       ),
       // Chat Room (individual chat screen)
       GoRoute(

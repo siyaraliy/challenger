@@ -8,6 +8,8 @@ import 'package:mobile/core/cubit/mode_cubit.dart';
 import 'package:mobile/core/models/app_mode_state.dart';
 import '../../../team/presentation/screens/create_challenge_screen.dart';
 import '../../data/posts_repository.dart';
+import '../widgets/comments_sheet.dart';
+import '../widgets/share_bottom_sheet.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -204,10 +206,23 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                     post: post,
                     onLikeTap: () => _toggleLike(post),
                     onCommentTap: () {
-                      // TODO: Navigate to comments
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => CommentsSheet(postId: post.id),
+                      );
                     },
                     showChallengeButton: true,
                     onChallengeTap: () => _challengeTeam(post),
+                    onShareTap: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => ShareBottomSheet(postId: post.id),
+                      );
+                    },
                   ),
                 );
               }),

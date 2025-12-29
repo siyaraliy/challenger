@@ -11,6 +11,7 @@ class ChatMessage extends Equatable {
   final String content;
   final String messageType; // 'text', 'image', 'video', 'system'
   final String? mediaUrl;
+  final String? sharedPostId;
   final bool isRead;
   final bool isOwn;
   final DateTime createdAt;
@@ -25,6 +26,7 @@ class ChatMessage extends Equatable {
     required this.content,
     required this.messageType,
     this.mediaUrl,
+    this.sharedPostId,
     required this.isRead,
     required this.isOwn,
     required this.createdAt,
@@ -41,6 +43,7 @@ class ChatMessage extends Equatable {
       content: json['content'] as String,
       messageType: json['messageType'] as String? ?? 'text',
       mediaUrl: json['mediaUrl'] as String?,
+      sharedPostId: json['sharedPostId'] as String? ?? json['shared_post_id'] as String?,
       isRead: json['isRead'] as bool? ?? false,
       isOwn: json['isOwn'] as bool? ?? false,
       createdAt: DateTime.parse(json['createdAt'] as String),
@@ -58,6 +61,7 @@ class ChatMessage extends Equatable {
       'content': content,
       'messageType': messageType,
       'mediaUrl': mediaUrl,
+      'sharedPostId': sharedPostId,
       'isRead': isRead,
       'isOwn': isOwn,
       'createdAt': createdAt.toIso8601String(),
@@ -68,6 +72,7 @@ class ChatMessage extends Equatable {
   bool get isImage => messageType == 'image';
   bool get isVideo => messageType == 'video';
   bool get isSystem => messageType == 'system';
+  bool get isPostShare => messageType == 'post_share';
 
   @override
   List<Object?> get props => [
@@ -80,6 +85,7 @@ class ChatMessage extends Equatable {
         content,
         messageType,
         mediaUrl,
+        sharedPostId,
         isRead,
         isOwn,
         createdAt,
